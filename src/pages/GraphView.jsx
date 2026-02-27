@@ -179,8 +179,9 @@ export default function GraphView() {
                                 <div className="w-24 h-24 rounded-[32px] bg-primary/10 mx-auto mb-6 flex items-center justify-center text-4xl font-black text-primary border-4 border-surface shadow-premium">
                                     {(selectedNode.avatarConfig && selectedNode.avatarConfig.emoji) || (selectedNode.name ? selectedNode.name.charAt(0) : "N")}
                                 </div>
-                                <h2 className="text-2xl font-extrabold text-heading tracking-tight">{selectedNode.name || "Node User"}</h2>
-                                <p className="text-sm font-bold text-primary uppercase tracking-widest mt-1">{selectedNode.department || 'NHCE Student'}</p>
+                                <h2 className="text-2xl font-extrabold text-heading tracking-tight">{selectedNode.name || "Peer"}</h2>
+                                <p className="text-primary font-bold text-sm">@{selectedNode.username || "node"}</p>
+                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-2">{selectedNode.department || 'NHCE Student'}</p>
                             </div>
 
                             {selectedNode.matchInfo && (
@@ -231,7 +232,7 @@ export default function GraphView() {
 
                         <div className="p-8 border-t border-border">
                             <button
-                                onClick={() => navigate(`/room/new?partner=${selectedNode.uid}`)}
+                                onClick={() => navigate(`/team-builder?partner=${selectedNode.uid}`)}
                                 className="w-full h-14 btn-primary"
                             >
                                 <MessageCircle size={20} />

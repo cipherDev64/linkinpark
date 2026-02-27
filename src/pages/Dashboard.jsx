@@ -17,6 +17,7 @@ import {
 import { Bar } from 'react-chartjs-2';
 import { motion } from 'framer-motion';
 import { getTeams } from "../services/teamService";
+import { subscribeToActivities } from "../services/activityService";
 
 ChartJS.register(
     CategoryScale,
@@ -38,6 +39,7 @@ export default function Dashboard() {
     const [chartData, setChartData] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
     const [myTeams, setMyTeams] = useState([]);
+    const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const containerVariants = {
@@ -79,18 +81,22 @@ export default function Dashboard() {
                 setMyTeams(userTeams);
             }
 
-            setChartData({
-                labels: sortedSkills.map(s => s[0]),
-                datasets: [
-                    {
-                        label: 'Network Saturation',
-                        data: sortedSkills.map(s => s[1]),
-                        backgroundColor: '#7C3AED',
-                        borderRadius: 12,
-                        barThickness: 24,
-                    }
-                ]
-            });
+            if (sortedSkills.length > 0) {
+                setChartData({
+                    labels: sortedSkills.map(s => s[0]),
+                    datasets: [
+                        {
+                            label: 'Network Saturation',
+                            data: sortedSkills.map(s => s[1]),
+                            backgroundColor: '#7C3AED',
+                            borderRadius: 12,
+                            barThickness: 24,
+                        }
+                    ]
+                });
+            } else {
+                setChartData(null);
+            }
 
             setStats({
                 totalUsers: users.length,
@@ -103,6 +109,13 @@ export default function Dashboard() {
         };
 
         fetchDashboardData();
+
+        // Real-time Activity Feed Subscription
+        const unsubscribe = subscribeToActivities((newActivities) => {
+            setActivities(newActivities);
+        }, 12);
+
+        return () => unsubscribe();
     }, []);
 
     const triggerConfetti = () => {
@@ -127,9 +140,12 @@ export default function Dashboard() {
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                     <motion.h1 variants={itemVariants} className="text-3xl font-extrabold tracking-tight md:text-5xl text-heading">
-                        Welcome back, {currentUser?.displayName ? currentUser.displayName.split(' ')[0] : "Student"}
+                        Welcome back, {currentUser?.displayName ? currentUser.displayName.split(' ')[0] : (currentUser?.username || "Student")}
                     </motion.h1>
-                    <motion.p variants={itemVariants} className="text-slate-500 font-medium mt-2 text-lg">
+                    <motion.p variants={itemVariants} className="text-primary font-bold text-lg">
+                        @{currentUser?.username || "node_user"}
+                    </motion.p>
+                    <motion.p variants={itemVariants} className="text-slate-500 font-medium mt-1">
                         Your campus collaboration hub is buzzing with new opportunities.
                     </motion.p>
                 </div>
@@ -209,7 +225,7 @@ export default function Dashboard() {
                     <div className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h2 className="text-xl font-bold text-heading">Your Active Labs</h2>
-                            <Link to="/teams" className="text-sm font-bold text-primary hover:underline">Launch Sandbox</Link>
+                            <Link to="/team-builder" className="text-sm font-bold text-primary hover:underline">Launch Sandbox</Link>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {myTeams.length > 0 ? myTeams.map(team => (
@@ -231,7 +247,7 @@ export default function Dashboard() {
                             )) : (
                                 <div className="col-span-2 saas-card p-10 text-center border-dashed bg-slate-50 shadow-none">
                                     <p className="text-slate-500 font-bold mb-4">No active labs found.</p>
-                                    <Link to="/teams" className="btn-primary px-8 py-3 inline-block">Start Your First Project</Link>
+                                    <Link to="/team-builder" className="btn-primary px-8 py-3 inline-block">Start Your First Project</Link>
                                 </div>
                             )}
                         </div>
@@ -246,11 +262,18 @@ export default function Dashboard() {
                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">Node Activity</h3>
                         </div>
                         <div className="flex-1 p-8 space-y-8 overflow-y-auto max-h-[600px] custom-scrollbar">
-                            <ActivityCard user="Emily W." action="shared a vision" target="Quantum AI" time="4m" />
-                            <ActivityCard user="Marcus T." action="joined room" target="FinTech Lab" time="12m" />
-                            <ActivityCard user="Sofia L." action="looking for" target="Rust Dev" time="1h" />
-                            <ActivityCard user="David K." action="deployed" target="Smart Campus" time="3h" />
-                            <ActivityCard user="Alex R." action="updated profile" target="Tech Stack" time="5h" />
+                            {activities.length > 0 ? activities.map((act) => (
+                                <ActivityCard
+                                    key={act.id}
+                                    user={act.userName}
+                                    username={act.userUsername}
+                                    type={act.type}
+                                    target={act.details?.teamName || (act.type === 'USER_JOINED' ? 'the Network' : 'Tech Stack')}
+                                    time={act.timestamp}
+                                />
+                            )) : (
+                                <div className="py-10 text-center text-slate-300 font-bold italic">Awaiting network pulses...</div>
+                            )}
                         </div>
                         <Link to="/graph" className="p-6 text-center text-sm font-black text-primary border-t border-border hover:bg-slate-50 transition-all">
                             EXPLORE NETWORK GRAPH
@@ -277,7 +300,27 @@ function StatCard({ icon, label, value, sub, highlight }) {
     );
 }
 
-function ActivityCard({ user, action, target, time }) {
+function ActivityCard({ user, username, type, target, time }) {
+    const formatTime = (date) => {
+        if (!date) return "...";
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return `${seconds}s`;
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes}m`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h`;
+        return `${Math.floor(hours / 24)}d`;
+    };
+
+    const getActionText = (type) => {
+        switch (type) {
+            case 'USER_JOINED': return 'initialized node in';
+            case 'PROJECT_CREATED': return 'launched project';
+            case 'PROFILE_UPDATED': return 'updated profile';
+            default: return 'synchronized with';
+        }
+    };
+
     return (
         <div className="flex gap-4 group cursor-pointer">
             <div className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-xs font-black text-slate-400 group-hover:bg-primary/5 group-hover:border-primary/20 transition-all shrink-0">
@@ -285,11 +328,14 @@ function ActivityCard({ user, action, target, time }) {
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-heading leading-relaxed">
-                    {user} <span className="text-slate-400 font-medium">{action}</span> <span className="text-primary">{target}</span>
+                    {user} <span className="text-slate-400 font-medium">@{username}</span>
+                </p>
+                <p className="text-xs font-medium text-slate-500">
+                    {getActionText(type)} <span className="text-primary font-bold">{target}</span>
                 </p>
                 <div className="flex items-center gap-1.5 mt-1 text-[10px] font-black text-slate-300 uppercase tracking-widest">
                     <Clock size={10} />
-                    {time} AGO
+                    {formatTime(time)} AGO
                 </div>
             </div>
         </div>

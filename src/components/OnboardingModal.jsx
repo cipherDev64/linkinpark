@@ -9,6 +9,8 @@ export default function OnboardingModal({ onComplete }) {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
+        displayName: "",
+        username: "",
         department: "",
         year: "",
         rolePreference: "",
@@ -21,7 +23,12 @@ export default function OnboardingModal({ onComplete }) {
             const user = getCurrentUser();
             if (user) {
                 const data = await getUserById(user.uid);
-                if (data && !data.department) {
+                if (data && (!data.department || !data.username)) {
+                    setFormData(prev => ({
+                        ...prev,
+                        displayName: data.displayName || user.displayName || "",
+                        username: data.username || user.email?.split('@')[0] || ""
+                    }));
                     setIsOpen(true);
                 } else if (data && data.department) {
                     onComplete && onComplete();
@@ -96,10 +103,35 @@ export default function OnboardingModal({ onComplete }) {
                                 </div>
 
                                 <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Full Name</label>
+                                            <input
+                                                type="text"
+                                                className="saas-input w-full"
+                                                placeholder="e.g. John Doe"
+                                                value={formData.displayName}
+                                                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Username</label>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">@</span>
+                                                <input
+                                                    type="text"
+                                                    className="saas-input w-full pl-8"
+                                                    placeholder="john_doe"
+                                                    value={formData.username}
+                                                    onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-3">
                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Primary Department</label>
                                         <input
-                                            autoFocus
                                             type="text"
                                             className="saas-input w-full"
                                             placeholder="e.g. Computer Science"
@@ -126,7 +158,7 @@ export default function OnboardingModal({ onComplete }) {
 
                                 <button
                                     onClick={handleNext}
-                                    disabled={!formData.department || !formData.year}
+                                    disabled={!formData.displayName || !formData.username || !formData.department || !formData.year}
                                     className="w-full h-14 btn-primary text-base disabled:opacity-50 disabled:grayscale transition-all shadow-premium"
                                 >
                                     Proceed to Specs <ArrowRight size={20} />

@@ -3,7 +3,7 @@ import { getAllUsers } from "../services/userService";
 import { getCurrentUser } from "../services/authService";
 import { calculateCompatibility } from "../services/matchService";
 import { createTeam } from "../services/teamService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Users, ArrowRight, Wand2, Lightbulb, UserPlus, X, Rocket, Sparkles, Target, BrainCircuit } from "lucide-react";
 import MatchCard from "../components/MatchCard";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 export default function TeamBuilder() {
     const [skillsNeeded, setSkillsNeeded] = useState([]);
     const [skillInput, setSkillInput] = useState("");
+    const [projectName, setProjectName] = useState("");
     const [recommended, setRecommended] = useState([]);
     const [users, setUsers] = useState([]);
     const [me, setMe] = useState(null);
@@ -22,6 +23,7 @@ export default function TeamBuilder() {
 
     const [selectedTeammates, setSelectedTeammates] = useState([]);
 
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
     const containerVariants = {
@@ -43,10 +45,20 @@ export default function TeamBuilder() {
             if (!currentUser) return;
             const all = await getAllUsers();
             setUsers(all);
-            setMe(all.find(u => u.uid === currentUser.uid));
+            const myself = all.find(u => u.uid === currentUser.uid);
+            setMe(myself);
+
+            // Handle pre-selected partner
+            const partnerId = searchParams.get("partner");
+            if (partnerId) {
+                const partner = all.find(u => u.uid === partnerId);
+                if (partner && !selectedTeammates.some(t => t.uid === partnerId)) {
+                    setSelectedTeammates(prev => [...prev, partner]);
+                }
+            }
         };
         fetchUsers();
-    }, []);
+    }, [searchParams]);
 
     const handleAddSkill = () => {
         const val = skillInput.trim();
@@ -131,9 +143,10 @@ export default function TeamBuilder() {
         setCreating(true);
         try {
             const roomId = await createTeam(
-                "New Vision",
+                projectName || "New Vision",
                 projectIdea,
-                skillsNeeded
+                skillsNeeded,
+                selectedTeammates
             );
             toast.success("Project Room Live!");
             navigate(`/room/${roomId}`);
@@ -163,27 +176,40 @@ export default function TeamBuilder() {
 
                     {/* Vision Statement */}
                     <motion.div variants={itemVariants} className="saas-card p-10 bg-white relative overflow-hidden">
-                        <div className="flex items-center gap-3 mb-6 relative z-10">
+                        <div className="flex items-center gap-3 mb-8 relative z-10">
                             <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
                                 <Lightbulb size={24} />
                             </div>
                             <h2 className="text-xl font-bold text-heading">Project Vision</h2>
                         </div>
-                        <div className="relative z-10 group">
-                            <textarea
-                                value={projectIdea}
-                                onChange={(e) => setProjectIdea(e.target.value)}
-                                placeholder="What's the core mission of this project?"
-                                className="saas-input w-full h-40 resize-none text-lg leading-relaxed p-6"
-                            />
-                            <button
-                                onClick={handleImproveIdea}
-                                disabled={isImproving}
-                                className="absolute bottom-4 right-4 h-12 px-6 btn-secondary shadow-soft flex items-center gap-2"
-                            >
-                                {isImproving ? <div className="w-4 h-4 border-2 border-primary border-t-white rounded-full animate-spin"></div> : <BrainCircuit size={18} className="text-primary" />}
-                                <span className="text-sm font-bold">Enhance with AI</span>
-                            </button>
+                        <div className="space-y-6 relative z-10">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Laboratory Name</label>
+                                <input
+                                    type="text"
+                                    value={projectName}
+                                    onChange={(e) => setProjectName(e.target.value)}
+                                    placeholder="e.g. Quantum AI Hub"
+                                    className="saas-input w-full"
+                                />
+                            </div>
+                            <div className="space-y-3 relative group">
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Objective & Mission</label>
+                                <textarea
+                                    value={projectIdea}
+                                    onChange={(e) => setProjectIdea(e.target.value)}
+                                    placeholder="What's the core mission of this project?"
+                                    className="saas-input w-full h-32 resize-none text-lg leading-relaxed p-6"
+                                />
+                                <button
+                                    onClick={handleImproveIdea}
+                                    disabled={isImproving}
+                                    className="absolute bottom-4 right-4 h-12 px-6 btn-secondary shadow-soft flex items-center gap-2"
+                                >
+                                    {isImproving ? <div className="w-4 h-4 border-2 border-primary border-t-white rounded-full animate-spin"></div> : <BrainCircuit size={18} className="text-primary" />}
+                                    <span className="text-sm font-bold">Enhance</span>
+                                </button>
+                            </div>
                         </div>
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-0" />
                     </motion.div>
@@ -203,7 +229,7 @@ export default function TeamBuilder() {
                             {/* Me */}
                             <div className="flex flex-col items-center">
                                 <div className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center text-3xl font-black text-primary shadow-premium border-4 border-primary/20 relative">
-                                    {me?.displayName?.charAt(0) || 'U'}
+                                    {(me?.avatarConfig?.emoji) || (me?.displayName ? me.displayName.charAt(0) : (me?.email ? me.email.charAt(0).toUpperCase() : 'U'))}
                                     <div className="absolute -top-2 -right-2 bg-primary text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg border-2 border-white uppercase">Lead</div>
                                 </div>
                                 <span className="mt-4 text-sm font-bold text-heading">You</span>
@@ -221,7 +247,7 @@ export default function TeamBuilder() {
                                         className="flex flex-col items-center group relative"
                                     >
                                         <div className="w-24 h-24 bg-white rounded-[32px] flex items-center justify-center text-3xl font-black text-slate-300 shadow-soft border-2 border-slate-100 group-hover:border-primary/30 transition-all cursor-pointer overflow-hidden">
-                                            {teammate.displayName?.charAt(0)}
+                                            {(teammate.avatarConfig?.emoji) || (teammate.displayName ? teammate.displayName.charAt(0) : (teammate.email ? teammate.email.charAt(0).toUpperCase() : 'P'))}
                                             <div
                                                 onClick={() => toggleTeammate(teammate)}
                                                 className="absolute inset-0 bg-red-500/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -229,7 +255,10 @@ export default function TeamBuilder() {
                                                 <X size={32} />
                                             </div>
                                         </div>
-                                        <span className="mt-4 text-sm font-bold text-heading">{teammate.displayName?.split(' ')[0]}</span>
+                                        <span className="mt-4 text-sm font-bold text-heading">
+                                            {teammate.displayName ? teammate.displayName.split(' ')[0] : (teammate.username ? teammate.username : 'Peer')}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-primary">@{teammate.username || "peer"}</span>
                                     </motion.div>
                                 ))}
 
@@ -284,8 +313,8 @@ export default function TeamBuilder() {
                                             <button
                                                 onClick={() => toggleTeammate(match.user)}
                                                 className={`absolute bottom-6 right-6 w-12 h-12 rounded-2xl flex items-center justify-center shadow-premium transition-all active:scale-95 ${selectedTeammates.some(t => t.uid === match.user.uid)
-                                                        ? 'bg-red-500 text-white'
-                                                        : 'bg-primary text-white hover:bg-primary-hover'
+                                                    ? 'bg-red-500 text-white'
+                                                    : 'bg-primary text-white hover:bg-primary-hover'
                                                     }`}
                                             >
                                                 {selectedTeammates.some(t => t.uid === match.user.uid) ? <X size={20} /> : <Plus size={20} />}

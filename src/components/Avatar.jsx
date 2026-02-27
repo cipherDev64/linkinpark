@@ -41,7 +41,7 @@ export default function Avatar({ user, config, className = "w-12 h-12 text-lg" }
     return (
         <div
             className={`flex items-center justify-center rounded-2xl font-black shadow-sm ${colorTheme.bg} ${colorTheme.text} ${colorTheme.border} border-2 ${className}`}
-            title={user.displayName}
+            title={user.displayName || `@${user.username}`}
         >
             {displayContent}
         </div>

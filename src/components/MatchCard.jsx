@@ -4,6 +4,8 @@ import { Star, ArrowRight, UserPlus, ExternalLink, X, CheckCircle2, MoreHorizont
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { getCurrentUser } from "../services/authService";
+import { sendConnectionRequest } from "../services/connectionService";
 
 export default function MatchCard({ match }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,10 +15,22 @@ export default function MatchCard({ match }) {
         setIsModalOpen(true);
     };
 
-    const confirmConnection = () => {
+    const confirmConnection = async () => {
         setIsModalOpen(false);
-        setHasConnected(true);
-        toast.success(`Connection request sent to ${match.user?.displayName?.split(' ')[0]}`);
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            toast.error("Please login to connect");
+            return;
+        }
+
+        try {
+            await sendConnectionRequest(currentUser.uid, match.user.uid);
+            setHasConnected(true);
+            toast.success(`Connection request sent to ${match.user?.displayName?.split(' ')[0]}`);
+        } catch (error) {
+            console.error(error);
+            toast.error("Handshake failed");
+        }
     };
 
     const getScoreColor = (score) => {
@@ -60,7 +74,8 @@ export default function MatchCard({ match }) {
                     <h3 className="text-xl font-bold text-heading leading-tight">
                         {match.user?.displayName || "Peer"}
                     </h3>
-                    <p className="text-sm font-bold text-primary mt-1 uppercase tracking-widest">{match.user?.department || "Campus Hub"}</p>
+                    <p className="text-xs font-bold text-primary">@{match.user?.username || "peer_node"}</p>
+                    <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">{match.user?.department || "Campus Hub"}</p>
                 </div>
 
                 {/* Bio / Skills */}
@@ -93,9 +108,9 @@ export default function MatchCard({ match }) {
                         {hasConnected ? <><CheckCircle2 size={18} /> Sent</> : <><UserPlus size={18} /> Connect</>}
                     </button>
                     <Link
-                        to={`/room/new?partner=${match.user?.uid}`}
+                        to={`/team-builder?partner=${match.user?.uid}`}
                         className="w-12 h-12 flex items-center justify-center bg-slate-50 border border-border text-slate-400 hover:text-primary hover:border-primary/20 rounded-2xl transition-all"
-                        title="Quick Chat"
+                        title="Start Project"
                     >
                         <ArrowRight size={20} />
                     </Link>
