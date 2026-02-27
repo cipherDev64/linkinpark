@@ -36,6 +36,12 @@ export const getTeamById = async (teamId) => {
     return null;
 };
 
+export const getTeams = async () => {
+    const teamsCol = collection(db, "teams");
+    const snapshot = await getDocs(teamsCol);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+};
+
 export const joinTeam = async (teamId) => {
     const currentUser = getCurrentUser();
     if (!currentUser) throw new Error("Not logged in");

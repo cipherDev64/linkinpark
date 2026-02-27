@@ -10,8 +10,8 @@ export const createUserIfNotExists = async (user) => {
         await setDoc(userRef, {
             uid: user.uid,
             email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
+            displayName: user.displayName || "Node User",
+            photoURL: user.photoURL || "",
             department: "",
             year: "",
             bio: "",
@@ -26,6 +26,15 @@ export const createUserIfNotExists = async (user) => {
             badges: ["Pioneer"],
             avatarConfig: { colorId: "blue", emoji: "" }
         });
+    } else {
+        // Ensure name and photo are synced if they were missing
+        const data = docSnap.data();
+        if (!data.displayName || !data.photoURL) {
+            await setDoc(userRef, {
+                displayName: data.displayName || user.displayName || "Node User",
+                photoURL: data.photoURL || user.photoURL || "",
+            }, { merge: true });
+        }
     }
 };
 

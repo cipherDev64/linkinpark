@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { getUserById, updateUserProfile } from "../services/userService";
 import { getCurrentUser } from "../services/authService";
-import { ArrowRight, CheckCircle2, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, X, Sparkles, Rocket, Zap, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function OnboardingModal({ onComplete }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +21,6 @@ export default function OnboardingModal({ onComplete }) {
             const user = getCurrentUser();
             if (user) {
                 const data = await getUserById(user.uid);
-                // If they don't have a department set, assume they are new
                 if (data && !data.department) {
                     setIsOpen(true);
                 } else if (data && data.department) {
@@ -54,111 +54,158 @@ export default function OnboardingModal({ onComplete }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex justify-center items-center p-4 animate-fade-in">
-            <div className="bg-white border-4 border-slate-800 rounded-3xl p-8 max-w-lg w-full shadow-[8px_8px_0px_#1e293b] relative">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex justify-center items-center p-4">
+            <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="bg-white rounded-[40px] p-10 max-w-xl w-full shadow-premium relative overflow-hidden"
+            >
+                {/* Decorative background */}
+                <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20" />
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent/5 rounded-full blur-3xl -ml-20 -mb-20" />
 
-                {/* Progress Bar */}
-                <div className="flex gap-2 mb-8">
-                    <div className={`h-2 flex-1 rounded-full border-2 border-slate-800 ${step >= 1 ? 'bg-pink-400' : 'bg-slate-200'}`}></div>
-                    <div className={`h-2 flex-1 rounded-full border-2 border-slate-800 ${step >= 2 ? 'bg-pink-400' : 'bg-slate-200'}`}></div>
+                <div className="relative z-10">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                            <Sparkles size={20} />
+                        </div>
+                        <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <motion.div
+                                className="h-full bg-primary"
+                                initial={{ width: "50%" }}
+                                animate={{ width: step === 1 ? "50%" : "100%" }}
+                                transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                            />
+                        </div>
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Step {step}/2</span>
+                    </div>
+
+                    <AnimatePresence mode="wait">
+                        {step === 1 ? (
+                            <motion.div
+                                key="step1"
+                                initial={{ x: 20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                exit={{ x: -20, opacity: 0 }}
+                                className="space-y-8"
+                            >
+                                <div>
+                                    <h2 className="text-3xl font-black text-heading leading-tight tracking-tight">Initialize Your Node</h2>
+                                    <p className="text-slate-500 font-medium mt-2">Let's configure your identity in the campus network.</p>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Primary Department</label>
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            className="saas-input w-full"
+                                            placeholder="e.g. Computer Science"
+                                            value={formData.department}
+                                            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Year of Study</label>
+                                        <select
+                                            className="saas-input w-full appearance-none font-bold"
+                                            value={formData.year}
+                                            onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                                        >
+                                            <option value="">Select current phase</option>
+                                            <option value="1">Alpha (1st Year)</option>
+                                            <option value="2">Beta (2nd Year)</option>
+                                            <option value="3">Gamma (3rd Year)</option>
+                                            <option value="4">Delta (4th Year)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleNext}
+                                    disabled={!formData.department || !formData.year}
+                                    className="w-full h-14 btn-primary text-base disabled:opacity-50 disabled:grayscale transition-all shadow-premium"
+                                >
+                                    Proceed to Specs <ArrowRight size={20} />
+                                </button>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key="step2"
+                                initial={{ x: 20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                exit={{ x: -20, opacity: 0 }}
+                                className="space-y-8"
+                            >
+                                <div>
+                                    <h2 className="text-3xl font-black text-heading leading-tight tracking-tight">Capability Matrix</h2>
+                                    <p className="text-slate-500 font-medium mt-2">Define your technical arsenal and role preference.</p>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Role Identity</label>
+                                        <input
+                                            autoFocus
+                                            type="text"
+                                            className="saas-input w-full"
+                                            placeholder="e.g. Backend Architect"
+                                            value={formData.rolePreference}
+                                            onChange={(e) => setFormData({ ...formData, rolePreference: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Core Arsenal</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={skillInput}
+                                                onChange={e => setSkillInput(e.target.value)}
+                                                onKeyDown={e => e.key === 'Enter' && handleAddSkill()}
+                                                className="saas-input flex-1"
+                                                placeholder="Add skill (e.g. Rust)"
+                                            />
+                                            <button onClick={handleAddSkill} className="w-12 h-12 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
+                                                <Zap size={20} />
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pt-2">
+                                            {formData.skills.map(skill => (
+                                                <span key={skill} className="h-9 px-4 rounded-xl bg-primary/5 text-primary text-xs font-black uppercase tracking-widest flex items-center gap-2 border border-primary/10">
+                                                    {skill}
+                                                    <button onClick={() => setFormData({ ...formData, skills: formData.skills.filter(s => s !== skill) })} className="hover:text-red-500 transition-colors">
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="h-14 px-8 rounded-2xl bg-slate-50 border border-border text-slate-400 font-black uppercase tracking-widest text-xs hover:bg-slate-100 transition-all"
+                                    >
+                                        Back
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={!formData.rolePreference || formData.skills.length === 0}
+                                        className="flex-1 h-14 btn-primary text-base shadow-premium disabled:opacity-50"
+                                    >
+                                        Sync Now <CheckCircle2 size={20} />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-
-                {step === 1 && (
-                    <div className="space-y-6 animate-slide-in">
-                        <div className="text-center mb-6">
-                            <h2 className="text-3xl font-display font-black text-slate-900 mb-2">Welcome to LinkInPark! 👋</h2>
-                            <p className="text-slate-500 font-medium">Let's get your profile set up so you can start finding amazing teammates.</p>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">What's your department?</label>
-                            <input
-                                autoFocus
-                                type="text"
-                                className="w-full doodle-input"
-                                placeholder="e.g. Computer Science"
-                                value={formData.department}
-                                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">What year are you in?</label>
-                            <select
-                                className="w-full doodle-input py-3 appearance-none bg-white"
-                                value={formData.year}
-                                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                            >
-                                <option value="">Select Year</option>
-                                <option value="1">1st Year</option>
-                                <option value="2">2nd Year</option>
-                                <option value="3">3rd Year</option>
-                                <option value="4">4th Year</option>
-                            </select>
-                        </div>
-
-                        <button
-                            onClick={handleNext}
-                            disabled={!formData.department || !formData.year}
-                            className="w-full btn-doodle btn-doodle-primary mt-4"
-                        >
-                            Next <ArrowRight size={20} />
-                        </button>
-                    </div>
-                )}
-
-                {step === 2 && (
-                    <div className="space-y-6 animate-slide-in">
-                        <div className="text-center mb-6">
-                            <h2 className="text-3xl font-display font-black text-slate-900 mb-2">Your Superpowers ⚡</h2>
-                            <p className="text-slate-500 font-medium">What do you bring to the table?</p>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Role Preference</label>
-                            <input
-                                autoFocus
-                                type="text"
-                                className="w-full doodle-input"
-                                placeholder="e.g. UX Designer, Backend Dev"
-                                value={formData.rolePreference}
-                                onChange={(e) => setFormData({ ...formData, rolePreference: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="mb-6">
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Top Skills</label>
-                            <div className="flex gap-2 mb-3">
-                                <input
-                                    type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleAddSkill()}
-                                    className="doodle-input flex-1" placeholder="e.g. React, Python"
-                                />
-                                <button onClick={handleAddSkill} className="btn-doodle px-4">+</button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {formData.skills.map(skill => (
-                                    <span key={skill} className="px-3 py-1 font-bold bg-blue-100 text-slate-800 text-sm rounded-full flex items-center gap-2 border-2 border-slate-800">
-                                        {skill}
-                                        <button onClick={() => setFormData({ ...formData, skills: formData.skills.filter(s => s !== skill) })} className="hover:text-red-500"><X size={14} /></button>
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 mt-4">
-                            <button onClick={() => setStep(1)} className="btn-doodle w-1/3">Back</button>
-                            <button
-                                onClick={handleSave}
-                                disabled={!formData.rolePreference || formData.skills.length === 0}
-                                className="flex-1 btn-doodle btn-doodle-primary"
-                            >
-                                Finish Setup <CheckCircle2 size={20} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
+            </motion.div>
         </div>
     );
 }

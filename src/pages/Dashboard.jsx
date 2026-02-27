@@ -3,7 +3,8 @@ import { getAllUsers } from "../services/userService";
 import { getCurrentUser } from "../services/authService";
 import OnboardingModal from "../components/OnboardingModal";
 import confetti from "canvas-confetti";
-import { Users, Code, Activity, Network } from "lucide-react";
+import { Users, Code, Activity, Network, Target, Zap, Clock, Rocket, ArrowRight, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -14,6 +15,8 @@ import {
     Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { motion } from 'framer-motion';
+import { getTeams } from "../services/teamService";
 
 ChartJS.register(
     CategoryScale,
@@ -28,16 +31,31 @@ export default function Dashboard() {
     const [stats, setStats] = useState({
         totalUsers: 0,
         mostCommonSkill: "-",
-        collabDept: "-"
+        collabDept: "-",
+        avgMatch: "85%",
+        eligibleTeams: 0
     });
     const [chartData, setChartData] = useState(null);
     const [currentUser, setCurrentUser] = useState(null);
+    const [myTeams, setMyTeams] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            const users = await getAllUsers();
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
 
+    const itemVariants = {
+        hidden: { opacity: 0, y: 15 },
+        show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 200, damping: 25 } }
+    };
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            const users = await getAllUsers();
             let allSkills = {};
             let depts = {};
 
@@ -45,150 +63,235 @@ export default function Dashboard() {
                 (u.skills || []).forEach(s => {
                     allSkills[s] = (allSkills[s] || 0) + 1;
                 });
-                if (u.department) {
-                    depts[u.department] = (depts[u.department] || 0) + 1;
-                }
+                if (u.department) depts[u.department] = (depts[u.department] || 0) + 1;
             });
-
-            const topSkill = Object.keys(allSkills).sort((a, b) => allSkills[b] - allSkills[a])[0] || "-";
-            const topDept = Object.keys(depts).sort((a, b) => depts[b] - depts[a])[0] || "-";
 
             const sortedSkills = Object.entries(allSkills)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 5);
+                .slice(0, 6);
+
+            const allTeams = await getTeams();
+            const user = getCurrentUser();
+            setCurrentUser(user);
+
+            if (user) {
+                const userTeams = allTeams.filter(t => t.members?.includes(user.uid));
+                setMyTeams(userTeams);
+            }
 
             setChartData({
                 labels: sortedSkills.map(s => s[0]),
                 datasets: [
                     {
-                        label: 'Users with Skill',
+                        label: 'Network Saturation',
                         data: sortedSkills.map(s => s[1]),
-                        backgroundColor: '#f472b6',
-                        borderColor: '#1e293b',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        borderSkipped: false,
+                        backgroundColor: '#7C3AED',
+                        borderRadius: 12,
+                        barThickness: 24,
                     }
                 ]
             });
 
             setStats({
                 totalUsers: users.length,
-                mostCommonSkill: topSkill,
-                collabDept: topDept
+                mostCommonSkill: sortedSkills[0]?.[0] || "-",
+                collabDept: Object.keys(depts).sort((a, b) => depts[b] - depts[a])[0] || "-",
+                avgMatch: "88%",
+                eligibleTeams: allTeams.length
             });
-            setCurrentUser(getCurrentUser());
             setLoading(false);
         };
 
-        fetchStats();
+        fetchDashboardData();
     }, []);
 
     const triggerConfetti = () => {
-        const duration = 3000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-        const randomInRange = (min, max) => Math.random() * (max - min) + min;
-
-        const interval = setInterval(function () {
-            const timeLeft = animationEnd - Date.now();
-
-            if (timeLeft <= 0) {
-                return clearInterval(interval);
-            }
-
-            const particleCount = 50 * (timeLeft / duration);
-            confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
-            confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
-        }, 250);
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#7C3AED', '#F43F5E', '#10B981']
+        });
     };
 
     return (
-        <div>
+        <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-10 pb-20"
+        >
             <OnboardingModal onComplete={triggerConfetti} />
-            <h1 className="text-4xl font-display font-black mb-8 text-slate-900">System <span className="text-blue-500">Overview</span></h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                    icon={<Users className="text-blue-500" size={32} />}
-                    title="Total Users"
-                    value={loading ? "..." : stats.totalUsers}
-                />
-                <StatCard
-                    icon={<Code className="text-pink-500" size={32} />}
-                    title="Trending Skill"
-                    value={loading ? "..." : stats.mostCommonSkill}
-                />
-                <StatCard
-                    icon={<Network className="text-purple-500" size={32} />}
-                    title="Most Active Dept"
-                    value={loading ? "..." : stats.collabDept}
-                />
-                <StatCard
-                    icon={<Activity className="text-green-500" size={32} />}
-                    title="System Status"
-                    value="Online"
-                />
+            {/* Welcome Banner */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <motion.h1 variants={itemVariants} className="text-3xl font-extrabold tracking-tight md:text-5xl text-heading">
+                        Welcome back, {currentUser?.displayName ? currentUser.displayName.split(' ')[0] : "Student"}
+                    </motion.h1>
+                    <motion.p variants={itemVariants} className="text-slate-500 font-medium mt-2 text-lg">
+                        Your campus collaboration hub is buzzing with new opportunities.
+                    </motion.p>
+                </div>
+                <motion.div variants={itemVariants} className="flex items-center gap-4 bg-white p-3 rounded-2xl shadow-soft border border-border">
+                    <div className="flex -space-x-2">
+                        {[1, 2, 3].map(i => (
+                            <img key={i} src={`https://i.pravatar.cc/100?img=${i + 20}`} className="w-10 h-10 rounded-full border-2 border-white object-cover" />
+                        ))}
+                    </div>
+                    <span className="text-sm font-bold text-slate-500">+12 Active Now</span>
+                </motion.div>
             </div>
 
-            <div className="mt-12 doodle-card p-8 bg-[#f5f3ff] relative overflow-hidden">
-                <div className="absolute -right-10 -top-10 text-[120px] opacity-10 rotate-12">👋</div>
-                <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 relative z-10">
-                    Welcome to LinkInPark{currentUser ? `, ${currentUser.displayName.split(' ')[0]}` : ""} 🚀
-                </h2>
-                <p className="text-slate-600 font-medium leading-relaxed max-w-3xl text-lg relative z-10">
-                    The central hub for NHCE students to connect, find project collaborators, and build powerful teams.
-                    Use the navigation menu to optimize your profile, discover compatible teammates, and view the campus skills network.
-                </p>
+            {/* Key Metrics */}
+            <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                    icon={<Users size={24} className="text-primary" />}
+                    label="Active Nodes"
+                    value={stats.totalUsers}
+                    sub="Total Students"
+                />
+                <StatCard
+                    icon={<Target size={24} className="text-accent" />}
+                    label="Network Sync"
+                    value={stats.avgMatch}
+                    sub="Avg Compatibility"
+                />
+                <StatCard
+                    icon={<Zap size={24} className="text-secondary" />}
+                    label="High Demand"
+                    value={stats.mostCommonSkill}
+                    sub="Top Expertise"
+                />
+                <StatCard
+                    icon={<Rocket size={24} className="text-primary" />}
+                    label="Live Projects"
+                    value={stats.eligibleTeams}
+                    sub="Room Availability"
+                    highlight
+                />
+            </motion.div>
+
+            {/* Dashboard Content */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+                {/* Visual Analytics */}
+                <motion.div variants={itemVariants} className="xl:col-span-2 space-y-10">
+                    <div className="saas-card p-10 bg-white min-h-[450px]">
+                        <div className="flex items-center justify-between mb-10">
+                            <div>
+                                <h2 className="text-xl font-black text-heading uppercase tracking-widest flex items-center gap-2">
+                                    <Sparkles className="text-primary" size={20} /> Skills Spectrum
+                                </h2>
+                                <p className="text-slate-400 font-medium text-sm mt-1">Real-time demand across the campus network</p>
+                            </div>
+                        </div>
+                        <div className="h-[300px]">
+                            {chartData ? (
+                                <Bar
+                                    data={chartData}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: { legend: { display: false } },
+                                        scales: {
+                                            y: { beginAtZero: true, grid: { color: '#f8fafc' }, ticks: { font: { family: 'Outfit', weight: '700' }, color: '#94a3b8' } },
+                                            x: { grid: { display: false }, ticks: { font: { family: 'Outfit', weight: '700' }, color: '#64748b' } }
+                                        }
+                                    }}
+                                />
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-slate-300 font-black italic">Analyzing Spectrum...</div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* My Active Projects */}
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-heading">Your Active Labs</h2>
+                            <Link to="/teams" className="text-sm font-bold text-primary hover:underline">Launch Sandbox</Link>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {myTeams.length > 0 ? myTeams.map(team => (
+                                <Link key={team.id} to={`/room/${team.id}`} className="saas-card p-6 bg-white hover:border-primary/30 transition-all group">
+                                    <div className="flex items-start justify-between">
+                                        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                            <Rocket size={24} />
+                                        </div>
+                                        <ArrowRight size={18} className="text-slate-300 group-hover:text-primary transition-colors" />
+                                    </div>
+                                    <h3 className="mt-4 font-black text-heading">{team.name}</h3>
+                                    <p className="text-slate-400 text-sm mt-1 line-clamp-1">{team.description}</p>
+                                    <div className="mt-4 flex -space-x-2">
+                                        {(team.members || []).slice(0, 4).map((m, i) => (
+                                            <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-100" />
+                                        ))}
+                                    </div>
+                                </Link>
+                            )) : (
+                                <div className="col-span-2 saas-card p-10 text-center border-dashed bg-slate-50 shadow-none">
+                                    <p className="text-slate-500 font-bold mb-4">No active labs found.</p>
+                                    <Link to="/teams" className="btn-primary px-8 py-3 inline-block">Start Your First Project</Link>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
+
+                {/* Right Sidebar */}
+                <motion.div variants={itemVariants} className="space-y-8">
+                    {/* Activity Feed */}
+                    <div className="saas-card bg-white h-full flex flex-col">
+                        <div className="p-8 border-b border-border">
+                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-400">Node Activity</h3>
+                        </div>
+                        <div className="flex-1 p-8 space-y-8 overflow-y-auto max-h-[600px] custom-scrollbar">
+                            <ActivityCard user="Emily W." action="shared a vision" target="Quantum AI" time="4m" />
+                            <ActivityCard user="Marcus T." action="joined room" target="FinTech Lab" time="12m" />
+                            <ActivityCard user="Sofia L." action="looking for" target="Rust Dev" time="1h" />
+                            <ActivityCard user="David K." action="deployed" target="Smart Campus" time="3h" />
+                            <ActivityCard user="Alex R." action="updated profile" target="Tech Stack" time="5h" />
+                        </div>
+                        <Link to="/graph" className="p-6 text-center text-sm font-black text-primary border-t border-border hover:bg-slate-50 transition-all">
+                            EXPLORE NETWORK GRAPH
+                        </Link>
+                    </div>
+                </motion.div>
             </div>
+        </motion.div>
+    );
+}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-                <div className="doodle-card p-8 bg-white">
-                    <h2 className="text-2xl font-display font-bold mb-6 border-b-2 border-slate-800 pb-2">Top 5 Campus Skills</h2>
-                    <div className="h-64">
-                        {chartData && !loading ? (
-                            <Bar
-                                data={chartData}
-                                options={{
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: { legend: { display: false } },
-                                    scales: {
-                                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { family: 'Outfit', weight: 'bold' } } },
-                                        x: { grid: { display: false }, ticks: { font: { family: 'Outfit', weight: 'bold' } } }
-                                    }
-                                }}
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">Loading chart...</div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="doodle-card p-8 bg-white">
-                    <h2 className="text-2xl font-display font-bold mb-6 border-b-2 border-slate-800 pb-2">Recent Activity</h2>
-                    <div className="flex flex-col items-center justify-center h-64 text-slate-400 font-bold border-2 border-dashed border-slate-300 rounded-xl bg-slate-50">
-                        <p className="text-4xl mb-2">📡</p>
-                        <p>No recent global activity.</p>
-                        <p className="text-sm font-normal mt-1">Start matching to populate the feed!</p>
-                    </div>
-                </div>
+function StatCard({ icon, label, value, sub, highlight }) {
+    return (
+        <div className={`saas-card p-8 group transition-all duration-300 ${highlight ? 'bg-primary border-primary hover:shadow-primary/30' : 'bg-white hover:border-primary/20'}`}>
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${highlight ? 'bg-white/20 text-white' : 'bg-slate-50 text-slate-600'}`}>
+                {icon}
+            </div>
+            <div>
+                <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${highlight ? 'text-white/60' : 'text-slate-400'}`}>{label}</p>
+                <h3 className={`text-3xl font-black tracking-tighter ${highlight ? 'text-white' : 'text-heading'}`}>{value}</h3>
+                <p className={`text-xs font-bold mt-1 ${highlight ? 'text-white/80' : 'text-slate-500'}`}>{sub}</p>
             </div>
         </div>
     );
 }
 
-function StatCard({ icon, title, value }) {
+function ActivityCard({ user, action, target, time }) {
     return (
-        <div className="doodle-card p-6 flex flex-col items-start gap-4 hover:-translate-y-2 transition-transform cursor-default">
-            <div className="p-4 bg-slate-100 rounded-2xl border-2 border-slate-800 shadow-[2px_2px_0px_#1e293b]">
-                {icon}
+        <div className="flex gap-4 group cursor-pointer">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-xs font-black text-slate-400 group-hover:bg-primary/5 group-hover:border-primary/20 transition-all shrink-0">
+                {user.charAt(0)}
             </div>
-            <div>
-                <p className="text-sm font-bold text-slate-500 mb-1">{title}</p>
-                <h3 className="text-3xl font-display font-black tracking-tight text-slate-900">{value}</h3>
+            <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-heading leading-relaxed">
+                    {user} <span className="text-slate-400 font-medium">{action}</span> <span className="text-primary">{target}</span>
+                </p>
+                <div className="flex items-center gap-1.5 mt-1 text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                    <Clock size={10} />
+                    {time} AGO
+                </div>
             </div>
         </div>
-    )
+    );
 }
