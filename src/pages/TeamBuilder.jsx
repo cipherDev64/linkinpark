@@ -110,7 +110,7 @@ export default function TeamBuilder() {
 
                         <div className="flex flex-wrap gap-2 mb-6">
                             {skillsNeeded.map(skill => (
-                                <span key={skill} className="text-xs font-bold bg-white text-slate-800 px-3 py-1.5 rounded-full border-2 border-slate-800 flex items-center gap-1 shadow-[2px_2px_0px_#1e293b]">
+                                <span key={skill} className="text-xs font-bold bg-white text-slate-700 px-3 py-1.5 rounded-full border border-slate-300 flex items-center gap-1 shadow-sm">
                                     {skill}
                                     <button onClick={() => handleRemoveSkill(skill)} className="hover:text-red-500 ml-1">X</button>
                                 </span>
@@ -133,7 +133,7 @@ export default function TeamBuilder() {
                 <div className="lg:col-span-2">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-display font-bold">Recommended Peers</h2>
-                        {recommended.length > 0 && <span className="text-sm bg-pink-200 border-2 border-slate-800 text-slate-900 px-3 py-1 rounded-full font-bold shadow-[2px_2px_0px_#1e293b]">{recommended.length} found</span>}
+                        {recommended.length > 0 && <span className="text-sm bg-pink-100 border border-pink-200 text-pink-800 px-3 py-1 rounded-full font-bold shadow-sm">{recommended.length} found</span>}
                     </div>
 
                     {skillsNeeded.length === 0 ? (

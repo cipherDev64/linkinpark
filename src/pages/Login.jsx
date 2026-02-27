@@ -21,23 +21,17 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center relative overflow-hidden">
+        <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center relative overflow-hidden text-slate-800">
             <div className="doodle-card p-10 max-w-md w-full relative z-10 text-center mx-4 bg-white">
-                <div className="flex justify-center mb-6">
-                    <div className="w-20 h-20 bg-blue-100 border-4 border-slate-800 rounded-3xl shadow-[4px_4px_0px_#1e293b] flex items-center justify-center rotate-3">
-                        <span className="text-4xl">🚀</span>
-                    </div>
+                <div className="flex justify-center mb-6 mt-4">
+                    <img src="/logo.png" alt="LinkInPark" className="h-20 md:h-24 object-contain drop-shadow-sm" />
                 </div>
-
-                <h1 className="text-5xl font-display font-black mb-2 tracking-tighter drop-shadow-[2px_2px_0px_#1e293b]">
-                    <span className="text-slate-900">LinkIn</span><span className="text-blue-500">Park</span>
-                </h1>
-                <p className="text-slate-500 mb-8 font-bold">NHCE Campus Connector</p>
+                <p className="text-slate-500 mb-8 font-semibold text-lg">NHCE Campus Connector</p>
 
                 {error && (
-                    <div className="bg-red-100 border-2 border-red-800 text-red-900 px-4 py-3 rounded-xl mb-6 flex items-start gap-3 text-left shadow-[2px_2px_0px_#991b1b]">
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 flex items-start gap-3 text-left">
                         <AlertCircle size={20} className="mt-0.5 flex-shrink-0" />
-                        <p className="text-sm font-bold">{error}</p>
+                        <p className="text-sm font-medium">{error}</p>
                     </div>
                 )}
 
@@ -47,7 +41,7 @@ export default function Login() {
                     className="w-full btn-doodle btn-doodle-primary flex items-center justify-center gap-3 text-lg py-4"
                 >
                     {loading ? (
-                        <div className="w-6 h-6 border-4 border-slate-800 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-6 h-6 border-4 border-blue-200 border-t-white rounded-full animate-spin"></div>
                     ) : (
                         <>
                             <Fingerprint size={24} />

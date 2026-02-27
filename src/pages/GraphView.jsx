@@ -93,12 +93,12 @@ export default function GraphView() {
     return (
         <div className="relative w-full h-full bg-[#f7f7f7] overflow-hidden -m-8">
             {/* Graph Legend Overlay */}
-            <div className="absolute top-4 left-4 doodle-card p-4 bg-white z-10 w-48 shadow-[2px_2px_0px_#1e293b]">
+            <div className="absolute top-4 left-4 doodle-card p-4 bg-white z-10 w-48 shadow-sm">
                 <h3 className="text-sm font-bold border-b-2 border-slate-800 pb-2 mb-2">Departments</h3>
                 <div className="flex flex-col gap-2">
                     {Array.from(new Set(graphData.nodes.map(n => n.group))).map(dept => (
                         <div key={dept} className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                            <div className="w-3 h-3 rounded-full border-2 border-slate-800" style={{ backgroundColor: nodeColors(dept) }}></div>
+                            <div className="w-3 h-3 rounded-full border border-slate-300" style={{ backgroundColor: nodeColors(dept) }}></div>
                             <span className="truncate">{dept}</span>
                         </div>
                     ))}
@@ -113,39 +113,43 @@ export default function GraphView() {
                 nodeAutoColorBy="group"
                 onNodeClick={handleNodeClick}
                 nodeCanvasObject={(node, ctx, globalScale) => {
-                    const label = node.name;
-                    const fontSize = 12 / globalScale;
+                    // Show emoji or initials if we have them
+                    const label = (node.avatarConfig && node.avatarConfig.emoji)
+                        ? node.avatarConfig.emoji
+                        : (node.name ? node.name.charAt(0).toUpperCase() : '?');
+
+                    const fontSize = 14 / globalScale;
                     ctx.font = `bold ${fontSize}px "Outfit", Sans-Serif`;
 
-                    // Draw node
+                    // Draw node bg
                     ctx.beginPath();
-                    ctx.arc(node.x, node.y, 4, 0, 2 * Math.PI, false);
+                    ctx.arc(node.x, node.y, 6, 0, 2 * Math.PI, false);
                     ctx.fillStyle = nodeColors(node.group);
                     ctx.fill();
                     ctx.lineWidth = 1;
-                    ctx.strokeStyle = '#1e293b'; // slate-800
+                    ctx.strokeStyle = '#cbd5e1'; // softer slate border
                     ctx.stroke();
 
                     // Draw label text
-                    const textWidth = ctx.measureText(label).width;
-                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
-
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2 - 8, ...bckgDimensions);
-
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillStyle = '#1e293b';
-                    ctx.fillText(label, node.x, node.y - 8);
+                    ctx.fillText(label, node.x, node.y);
+
+                    // Draw name below
+                    const textLabel = node.name;
+                    const textFontSize = 8 / globalScale;
+                    ctx.font = `600 ${textFontSize}px "Outfit", Sans-Serif`;
+                    ctx.fillText(textLabel, node.x, node.y + 10);
                 }}
-                linkColor={() => 'rgba(148, 163, 184, 0.4)'} // slate-400 with opacity
+                linkColor={() => '#e2e8f0'} // lighter slate
                 linkWidth={link => link.value > 80 ? 2 : 1}
                 d3VelocityDecay={0.3}
             />
 
             {/* Node Info Overlay */}
             {selectedNode && (
-                <div className="absolute top-4 right-4 w-80 doodle-card p-6 border-4 border-slate-800 bg-white z-20 shadow-[6px_6px_0px_#1e293b] animate-slide-in">
+                <div className="absolute top-4 right-4 w-80 doodle-card p-6 bg-white z-20 shadow-md animate-slide-in">
                     <div className="flex justify-between items-start mb-4 border-b-2 border-slate-800 pb-4">
                         <div className="flex-1 pr-4">
                             <h2 className="text-2xl font-display font-black text-slate-900 leading-tight">{selectedNode.name}</h2>
@@ -173,7 +177,7 @@ export default function GraphView() {
                             <div className="flex flex-wrap gap-1">
                                 {selectedNode.skills && selectedNode.skills.length > 0 ? (
                                     selectedNode.skills.map((skill, i) => (
-                                        <span key={i} className="text-xs font-bold bg-slate-100 text-slate-700 px-2 py-1 rounded border-2 border-slate-800">{skill}</span>
+                                        <span key={i} className="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded border border-slate-200">{skill}</span>
                                     ))
                                 ) : (
                                     <span className="text-xs text-slate-500 italic">No skills listed</span>
@@ -192,10 +196,10 @@ export default function GraphView() {
                         {selectedNode.matchInfo && selectedNode.matchInfo.score > 0 && (
                             <div className="mt-4 pt-4 border-t-2 border-slate-800">
                                 <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm font-bold text-slate-600">Compatibility</span>
+                                    <span className="text-sm font-bold text-slate-500">Compatibility</span>
                                     <span className="text-xl font-black text-pink-500">{selectedNode.matchInfo.score}%</span>
                                 </div>
-                                <p className="text-xs font-bold text-slate-500 bg-[#fff0f6] p-2 rounded-lg border-2 border-slate-800">
+                                <p className="text-xs font-semibold text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200">
                                     💡 {selectedNode.matchInfo.explanation}
                                 </p>
                             </div>

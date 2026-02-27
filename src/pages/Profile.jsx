@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getUserById, updateUserProfile } from "../services/userService";
 import { getCurrentUser } from "../services/authService";
 import Toast from "../components/Toast";
+import Avatar, { AVATAR_COLORS, POPULAR_EMOJIS } from "../components/Avatar";
 import { Save, X, Plus } from "lucide-react";
 
 export default function Profile() {
@@ -17,8 +18,10 @@ export default function Profile() {
         skills: [],
         interests: [],
         projects: [],
-        badges: []
+        badges: [],
+        avatarConfig: { colorId: "blue", emoji: "" }
     });
+    const [userContext, setUserContext] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState(null);
@@ -30,6 +33,7 @@ export default function Profile() {
         const fetchProfile = async () => {
             const user = getCurrentUser();
             if (user) {
+                setUserContext(user);
                 const data = await getUserById(user.uid);
                 if (data) {
                     setProfile({
@@ -44,7 +48,8 @@ export default function Profile() {
                         skills: data.skills || [],
                         interests: data.interests || [],
                         projects: data.projects || [],
-                        badges: data.badges || []
+                        badges: data.badges || [],
+                        avatarConfig: data.avatarConfig || { colorId: "blue", emoji: "" }
                     });
                 }
             }
@@ -102,8 +107,47 @@ export default function Profile() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="doodle-card p-8 space-y-6 bg-[#f0f9ff]">
-                    <h2 className="text-2xl font-display font-bold border-b-2 border-slate-800 pb-4 flex items-center gap-2">Basic Information</h2>
+                <div className="doodle-card p-8 space-y-6 bg-white border border-slate-200">
+                    <h2 className="text-2xl font-display font-bold border-b border-slate-200 pb-4 flex items-center gap-2">Basic Information</h2>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                        <Avatar user={userContext} config={profile.avatarConfig} className="w-24 h-24 text-4xl" />
+                        <div className="flex-1 w-full space-y-3">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Color Theme</label>
+                                <div className="flex gap-2 flex-wrap">
+                                    {AVATAR_COLORS.map(color => (
+                                        <button
+                                            key={color.id}
+                                            onClick={() => setProfile({ ...profile, avatarConfig: { ...profile.avatarConfig, colorId: color.id } })}
+                                            className={`w-8 h-8 rounded-full ${color.bg} border-2 ${profile.avatarConfig.colorId === color.id ? color.border : 'border-transparent'} hover:scale-110 transition-transform`}
+                                            title={color.id}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Emoji Icon</label>
+                                <div className="flex gap-1 flex-wrap">
+                                    <button
+                                        onClick={() => setProfile({ ...profile, avatarConfig: { ...profile.avatarConfig, emoji: "" } })}
+                                        className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold bg-white border ${!profile.avatarConfig.emoji ? 'border-slate-800 shadow-sm' : 'border-slate-200 text-slate-400'}`}
+                                    >
+                                        A
+                                    </button>
+                                    {POPULAR_EMOJIS.map(emoji => (
+                                        <button
+                                            key={emoji}
+                                            onClick={() => setProfile({ ...profile, avatarConfig: { ...profile.avatarConfig, emoji } })}
+                                            className={`w-8 h-8 rounded-lg flex items-center justify-center bg-white border ${profile.avatarConfig.emoji === emoji ? 'border-slate-800 shadow-sm' : 'border-slate-200 opacity-60 hover:opacity-100'}`}
+                                        >
+                                            {emoji}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div>
                         <label className="block text-sm font-bold text-slate-700 mb-2">Department</label>

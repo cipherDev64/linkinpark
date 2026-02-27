@@ -1,5 +1,5 @@
-import { Star, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import Avatar from "./Avatar";
 
 export default function MatchCard({ match }) {
     return (
@@ -11,9 +11,7 @@ export default function MatchCard({ match }) {
             )}
 
             <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-full bg-blue-100 border-2 border-slate-800 shadow-[4px_4px_0px_#1e293b] flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl font-black text-slate-800">{match.user.displayName?.charAt(0) || '?'}</span>
-                </div>
+                <Avatar user={match.user} config={match.user.avatarConfig} className="w-16 h-16 text-xl" />
                 <div>
                     <h3 className="text-xl font-display font-black text-slate-900">{match.user.displayName}</h3>
                     <p className="text-sm font-bold text-slate-500">{match.user.department || "No Department"}</p>
@@ -30,7 +28,7 @@ export default function MatchCard({ match }) {
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Top Skills</h4>
                 <div className="flex flex-wrap gap-1">
                     {(match.user.skills || []).slice(0, 3).map((skill, i) => (
-                        <span key={i} className="text-xs font-bold bg-slate-100 text-slate-700 px-2 py-1 rounded-md border-2 border-slate-800">
+                        <span key={i} className="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200">
                             {skill}
                         </span>
                     ))}
@@ -49,7 +47,7 @@ export default function MatchCard({ match }) {
             </div>
 
             {match.explanation && (
-                <div className="mt-3 text-xs font-bold text-slate-500 bg-slate-50 p-2 rounded-lg border-2 border-dashed border-slate-300">
+                <div className="mt-3 text-xs font-semibold text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-200">
                     💡 {match.explanation}
                 </div>
             )}

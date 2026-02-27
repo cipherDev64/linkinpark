@@ -6,54 +6,56 @@
 
 @layer base {
   body {
-    @apply bg-[#f7f7f7] text-slate-900 font-sans tracking-wide antialiased;
+    @apply bg-[#fdfdfd] text-slate-800 font-sans tracking-tight antialiased;
     margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
-    background-image: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.05) 1px, transparent 1px);
-    background-size: 20px 20px;
+    background-image: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 }
 
 @layer utilities {
   .doodle-card {
-    @apply bg-white border-2 border-slate-800 rounded-3xl shadow-[4px_4px_0px_#1e293b] transition-all duration-300;
+    @apply bg-white border border-slate-200 rounded-3xl shadow-[0px_8px_32px_#0f172a0a];
   }
 
   .doodle-card:hover {
-    @apply -translate-y-1 shadow-[6px_6px_0px_#1e293b];
+    @apply -translate-y-1 shadow-[0px_12px_32px_#0f172a14];
   }
 
   .doodle-input {
-    @apply bg-white border-2 border-slate-800 rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-0 focus:shadow-[4px_4px_0px_#1e293b] hover:-translate-y-0.5 transition-all w-full;
+    @apply w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm;
   }
 
   .btn-doodle {
-    @apply relative px-6 py-3 font-bold text-slate-800 rounded-2xl border-2 border-slate-800 bg-white shadow-[4px_4px_0px_#1e293b] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#1e293b] active:translate-y-0 active:shadow-[0px_0px_0px_#1e293b] transition-all duration-200 inline-flex items-center justify-center gap-2;
+    @apply relative px-6 py-3 font-display font-black tracking-tight text-lg rounded-xl transition-all duration-200;
   }
 
   .btn-doodle-primary {
-    @apply bg-blue-300 text-slate-900 border-slate-900 shadow-[4px_4px_0px_#0f172a];
+    @apply bg-pink-400 text-slate-900 border-2 border-slate-800 shadow-[0px_8px_24px_#0f172a1f] hover:-translate-y-1 hover:shadow-[0px_12px_28px_#0f172a29] active:translate-y-0 active:shadow-sm;
+  }
+
+  .btn-doodle-secondary {
+    @apply bg-white text-slate-800 border-2 border-slate-200 shadow-sm hover:border-slate-300 hover:bg-slate-50 transition-colors;
   }
 
   .btn-doodle-pink {
-    @apply bg-pink-300 text-slate-900 border-slate-900 shadow-[4px_4px_0px_#0f172a];
+    @apply bg-pink-500 text-white border-pink-600 shadow-[0px_4px_12px_#ec489940] hover:shadow-[0px_6px_16px_#ec48994d] hover:border-pink-700;
   }
 }
 
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f7f7f7;
-  border-left: 2px solid #1e293b;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border: 2px solid #1e293b;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {

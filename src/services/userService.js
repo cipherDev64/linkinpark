@@ -23,7 +23,8 @@ export const createUserIfNotExists = async (user) => {
             skills: [],
             interests: [],
             projects: [],
-            badges: ["Pioneer"]
+            badges: ["Pioneer"],
+            avatarConfig: { colorId: "blue", emoji: "" }
         });
     }
 };

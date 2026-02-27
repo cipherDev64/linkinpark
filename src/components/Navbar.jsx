@@ -13,12 +13,10 @@ export default function Navbar({ handleLogout }) {
     ];
 
     return (
-        <div className="w-full bg-white border-b-4 border-slate-800 px-4 md:px-8 py-4 z-[60] sticky top-0 flex items-center justify-between shadow-[0px_4px_0px_#1e293b]">
+        <div className="w-full bg-white border-b border-slate-200 px-4 md:px-8 py-3 z-[60] sticky top-0 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-4 md:gap-8">
                 <Link to="/dashboard" className="flex items-center">
-                    <h1 className="text-2xl md:text-3xl font-display font-black tracking-tight drop-shadow-[2px_2px_0px_#1e293b]">
-                        LinkIn<span className="text-blue-500">Park</span>
-                    </h1>
+                    <img src="/logo.png" alt="LinkInPark" className="h-[40px] md:h-[48px] object-contain drop-shadow-sm" />
                 </Link>
 
                 <nav className="hidden lg:flex items-center gap-2">
@@ -29,8 +27,8 @@ export default function Navbar({ handleLogout }) {
                                 key={item.name}
                                 to={item.path}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-xl font-bold transition-all border-2 border-transparent ${isActive
-                                        ? "bg-[#fffae6] text-slate-900 border-slate-800 shadow-[2px_2px_0px_#1e293b] -translate-y-0.5"
-                                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:-translate-y-0.5"
+                                    ? "bg-[#fffae6] text-slate-900 border-slate-800 shadow-[2px_2px_0px_#1e293b] -translate-y-0.5"
+                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:-translate-y-0.5"
                                     }`}
                             >
                                 {item.icon}
@@ -51,8 +49,8 @@ export default function Navbar({ handleLogout }) {
                                 key={item.name}
                                 to={item.path}
                                 className={`p-2 rounded-xl font-bold transition-all border-2 border-transparent ${isActive
-                                        ? "bg-[#fffae6] text-slate-900 border-slate-800 shadow-[2px_2px_0px_#1e293b]"
-                                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                    ? "bg-[#fffae6] text-slate-900 border-slate-800 shadow-[2px_2px_0px_#1e293b]"
+                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                                     }`}
                                 title={item.name}
                             >
@@ -64,7 +62,7 @@ export default function Navbar({ handleLogout }) {
 
                 <button
                     onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl font-bold text-slate-500 hover:bg-red-50 hover:text-red-500 hover:border-red-500 border-2 border-transparent transition-all"
+                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg font-semibold text-slate-500 hover:bg-red-50 hover:text-red-500 transition-all"
                     title="Logout"
                 >
                     <LogOut size={20} />
