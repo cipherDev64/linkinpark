@@ -21,31 +21,33 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen bg-darkBg flex items-center justify-center relative overflow-hidden">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neonBlue/20 blur-[150px] rounded-full pointer-events-none"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-neonPink/20 blur-[150px] rounded-full pointer-events-none"></div>
+        <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center relative overflow-hidden">
+            <div className="doodle-card p-10 max-w-md w-full relative z-10 text-center mx-4 bg-white">
+                <div className="flex justify-center mb-6">
+                    <div className="w-20 h-20 bg-blue-100 border-4 border-slate-800 rounded-3xl shadow-[4px_4px_0px_#1e293b] flex items-center justify-center rotate-3">
+                        <span className="text-4xl">🚀</span>
+                    </div>
+                </div>
 
-            <div className="glass-card p-10 max-w-md w-full relative z-10 text-center">
-                <h1 className="text-5xl font-black mb-2 tracking-tighter">
-                    <span className="neon-text-blue">LinkIn</span>
-                    <span className="neon-text-pink">Park</span>
+                <h1 className="text-5xl font-display font-black mb-2 tracking-tighter drop-shadow-[2px_2px_0px_#1e293b]">
+                    <span className="text-slate-900">LinkIn</span><span className="text-blue-500">Park</span>
                 </h1>
-                <p className="text-gray-400 mb-8 font-medium">NHCE Campus Connector</p>
+                <p className="text-slate-500 mb-8 font-bold">NHCE Campus Connector</p>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl mb-6 flex items-start gap-3 text-left">
+                    <div className="bg-red-100 border-2 border-red-800 text-red-900 px-4 py-3 rounded-xl mb-6 flex items-start gap-3 text-left shadow-[2px_2px_0px_#991b1b]">
                         <AlertCircle size={20} className="mt-0.5 flex-shrink-0" />
-                        <p className="text-sm">{error}</p>
+                        <p className="text-sm font-bold">{error}</p>
                     </div>
                 )}
 
                 <button
                     onClick={handleLogin}
                     disabled={loading}
-                    className="w-full btn-neon btn-neon-primary flex items-center justify-center gap-3 text-lg"
+                    className="w-full btn-doodle btn-doodle-primary flex items-center justify-center gap-3 text-lg py-4"
                 >
                     {loading ? (
-                        <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        <div className="w-6 h-6 border-4 border-slate-800 border-t-transparent rounded-full animate-spin"></div>
                     ) : (
                         <>
                             <Fingerprint size={24} />
@@ -54,7 +56,7 @@ export default function Login() {
                     )}
                 </button>
 
-                <p className="text-sm text-gray-500 mt-6">
+                <p className="text-sm font-bold text-slate-400 mt-6">
                     Connect with your Google account
                 </p>
             </div>

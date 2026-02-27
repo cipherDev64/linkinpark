@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { auth } from "./firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
-import Sidebar from "./components/Sidebar";
+import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Matches from "./pages/Matches";
@@ -36,10 +36,10 @@ function App() {
 
   return (
     <Router>
-      <div className="flex h-screen bg-[#f7f7f7] text-slate-900 font-sans selection:bg-pink-300 selection:text-slate-900 overflow-hidden">
-        {user && <Sidebar handleLogout={handleLogout} />}
+      <div className="flex flex-col h-screen bg-[#f7f7f7] text-slate-900 font-sans selection:bg-pink-300 selection:text-slate-900 overflow-hidden">
+        {user && <Navbar handleLogout={handleLogout} />}
 
-        <div className="flex-1 h-screen overflow-y-auto p-8 pattern-dots">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-transparent">
           <Routes>
             <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
 
