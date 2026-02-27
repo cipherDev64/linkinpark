@@ -24,7 +24,7 @@ export default function Login() {
         <div className="min-h-screen bg-[#fdfdfd] flex items-center justify-center relative overflow-hidden text-slate-800">
             <div className="doodle-card p-10 max-w-md w-full relative z-10 text-center mx-4 bg-white">
                 <div className="flex justify-center mb-6 mt-4">
-                    <img src="/logo.png" alt="LinkInPark" className="h-20 md:h-24 object-contain drop-shadow-sm" />
+                    <img src="/logo.png" alt="LinkInPark" className="w-[80%] md:w-[90%] h-auto object-contain drop-shadow-sm scale-110" />
                 </div>
                 <p className="text-slate-500 mb-8 font-semibold text-lg">NHCE Campus Connector</p>
 

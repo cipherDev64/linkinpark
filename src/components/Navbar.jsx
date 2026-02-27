@@ -15,8 +15,8 @@ export default function Navbar({ handleLogout }) {
     return (
         <div className="w-full bg-white border-b border-slate-200 px-4 md:px-8 py-3 z-[60] sticky top-0 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-4 md:gap-8">
-                <Link to="/dashboard" className="flex items-center">
-                    <img src="/logo.png" alt="LinkInPark" className="h-[40px] md:h-[48px] object-contain drop-shadow-sm" />
+                <Link to="/dashboard" className="flex items-center ml-1">
+                    <img src="/logo.png" alt="LinkInPark" className="h-[50px] md:h-[70px] object-cover scale-150 origin-left drop-shadow-sm" />
                 </Link>
 
                 <nav className="hidden lg:flex items-center gap-2">
@@ -41,7 +41,7 @@ export default function Navbar({ handleLogout }) {
 
             <div className="flex items-center gap-2">
                 {/* Mobile/Tablet small menu icons */}
-                <div className="lg:hidden flex items-center gap-1 mr-2">
+                <div className="lg:hidden flex items-center justify-end flex-wrap gap-1 mr-2">
                     {navItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (

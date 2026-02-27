@@ -91,8 +91,8 @@ export default function ProjectRoom() {
     const doneTasks = tasks.filter(t => t.status === "done");
 
     return (
-        <div className="max-w-[1400px] mx-auto h-[calc(100vh-2rem)] flex flex-col">
-            <div className="flex justify-between items-end mb-6">
+        <div className="max-w-[1400px] mx-auto h-full flex flex-col min-h-0">
+            <div className="flex justify-between items-end mb-6 shrink-0 flex-wrap gap-4">
                 <div>
                     <h1 className="text-4xl font-display font-black text-slate-900 mb-2 flex items-center gap-4">
                         {team.name}
@@ -116,10 +116,10 @@ export default function ProjectRoom() {
             </div>
 
             {/* Main Content Area: Kanban + Chat */}
-            <div className="flex-1 flex gap-6 overflow-hidden pb-4">
+            <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden pb-4">
 
                 {/* Kanban Board */}
-                <div className={`flex-1 grid ${isChatOpen ? 'grid-cols-1 xl:grid-cols-3' : 'grid-cols-1 md:grid-cols-3'} gap-6 overflow-hidden`}>
+                <div className={`flex-1 grid ${isChatOpen ? 'grid-cols-1 xl:grid-cols-3' : 'grid-cols-1 md:grid-cols-3'} gap-6 overflow-y-auto lg:overflow-hidden`}>
                     {/* TODO Column */}
                     <div className="doodle-card bg-[#f1f5f9] p-4 flex flex-col h-full border-dashed hidden-scrollbar">
                         <h3 className="text-lg font-display font-bold mb-4 flex items-center justify-between border-b-2 border-slate-300 pb-2">
@@ -175,7 +175,7 @@ export default function ProjectRoom() {
 
                 {/* Team Chat Panel */}
                 {isChatOpen && (
-                    <div className="w-80 lg:w-96 doodle-card bg-white flex flex-col h-full border border-slate-200 shadow-sm shrink-0">
+                    <div className="w-full lg:w-80 xl:w-96 doodle-card bg-white flex flex-col h-[500px] lg:h-full border border-slate-200 shadow-sm shrink-0">
                         <div className="p-4 border-b border-slate-200 bg-slate-50 rounded-t-2xl shrink-0">
                             <h3 className="font-display font-bold text-slate-800 flex items-center gap-2">
                                 <MessageSquare size={18} className="text-blue-500" /> Team Chat

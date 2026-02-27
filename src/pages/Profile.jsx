@@ -111,7 +111,7 @@ export default function Profile() {
                     <h2 className="text-2xl font-display font-bold border-b border-slate-200 pb-4 flex items-center gap-2">Basic Information</h2>
 
                     <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                        <Avatar user={userContext} config={profile.avatarConfig} className="w-24 h-24 text-4xl" />
+                        <Avatar user={userContext} config={profile.avatarConfig} className="w-24 h-24 text-4xl shrink-0" />
                         <div className="flex-1 w-full space-y-3">
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Color Theme</label>
