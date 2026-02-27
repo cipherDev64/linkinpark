@@ -1,60 +1,62 @@
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
+import { doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
 
 export const createUserIfNotExists = async (user) => {
     if (!user) return;
     const userRef = doc(db, "users", user.uid);
-    const snap = await getDoc(userRef);
+    const docSnap = await getDoc(userRef);
 
-    if (!snap.exists()) {
-        try {
-            await setDoc(userRef, {
-                uid: user.uid,
-                name: user.displayName,
-                email: user.email,
-                department: "",
-                year: "",
-                skills: [],
-                interests: [],
-                projects: [],
-                careerGoal: "",
-                createdAt: serverTimestamp()
-            });
-        } catch (error) {
-            console.error("Error creating user document:", error);
-            throw error;
-        }
-    }
-};
-
-export const updateUserProfile = async (uid, data) => {
-    if (!uid) return;
-    const userRef = doc(db, "users", uid);
-    try {
-        await updateDoc(userRef, data);
-    } catch (error) {
-        console.error("Error updating user profile:", error);
-        throw error;
+    if (!docSnap.exists()) {
+        await setDoc(userRef, {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            department: "",
+            year: "",
+            bio: "",
+            github: "",
+            linkedin: "",
+            portfolio: "",
+            rolePreference: "",
+            availability: "Available",
+            skills: [],
+            interests: [],
+            projects: [],
+            badges: ["Pioneer"]
+        });
     }
 };
 
 export const getUserById = async (uid) => {
     if (!uid) return null;
     const userRef = doc(db, "users", uid);
-    const snap = await getDoc(userRef);
-    if (snap.exists()) {
-        return snap.data();
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+        return docSnap.data();
     }
     return null;
 };
 
 export const getAllUsers = async () => {
+    const usersCol = collection(db, "users");
+    const userSnapshot = await getDocs(usersCol);
+    return userSnapshot.docs.map(doc => doc.data());
+};
+
+export const updateUserProfile = async (uid, data) => {
+    if (!uid) return;
+    const userRef = doc(db, "users", uid);
     try {
-        const usersCol = collection(db, "users");
-        const snapshot = await getDocs(usersCol);
-        return snapshot.docs.map(doc => doc.data());
+        if (data.bio && data.bio.length > 20 && data.badges && !data.badges.includes("Storyteller")) {
+            data.badges.push("Storyteller");
+        }
+        if (data.skills && data.skills.length >= 5 && data.badges && !data.badges.includes("Skill Master")) {
+            data.badges.push("Skill Master");
+        }
+        await setDoc(userRef, data, { merge: true });
     } catch (error) {
-        console.error("Error fetching all users:", error);
-        return [];
+        console.error("Error updating user profile:", error);
+        throw error;
     }
 };

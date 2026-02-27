@@ -1,126 +1,157 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getAllUsers } from "../services/userService";
 import { getCurrentUser } from "../services/authService";
 import { calculateCompatibility } from "../services/matchService";
+import { createTeam } from "../services/teamService";
+import { useNavigate } from "react-router-dom";
+import { Plus, Users, ArrowRight } from "lucide-react";
 import MatchCard from "../components/MatchCard";
-import { FlaskConical, Search, X } from "lucide-react";
 
 export default function TeamBuilder() {
-    const [idea, setIdea] = useState("");
-    const [requiredSkills, setRequiredSkills] = useState([]);
+    const [skillsNeeded, setSkillsNeeded] = useState([]);
     const [skillInput, setSkillInput] = useState("");
     const [recommended, setRecommended] = useState([]);
-    const [searching, setSearching] = useState(false);
+    const [users, setUsers] = useState([]);
+    const [me, setMe] = useState(null);
+    const [creating, setCreating] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            const currentUser = getCurrentUser();
+            if (!currentUser) return;
+            const all = await getAllUsers();
+            setUsers(all);
+            setMe(all.find(u => u.uid === currentUser.uid));
+        };
+        fetchUsers();
+    }, []);
 
     const handleAddSkill = () => {
-        const trimmed = skillInput.trim();
-        if (trimmed && !requiredSkills.includes(trimmed)) {
-            setRequiredSkills([...requiredSkills, trimmed]);
+        const val = skillInput.trim();
+        if (val && !skillsNeeded.includes(val)) {
+            setSkillsNeeded([...skillsNeeded, val]);
+            findMatches([...skillsNeeded, val]);
         }
         setSkillInput("");
     };
 
-    const handleFindTeam = async () => {
-        if (requiredSkills.length === 0) return;
-        setSearching(true);
+    const handleRemoveSkill = (skill) => {
+        const newSkills = skillsNeeded.filter(s => s !== skill);
+        setSkillsNeeded(newSkills);
+        findMatches(newSkills);
+    };
 
-        const allUsers = await getAllUsers();
-        const currentUserAuth = getCurrentUser();
+    const findMatches = (skills) => {
+        if (!me || skills.length === 0) {
+            setRecommended([]);
+            return;
+        }
 
-        const mockRequirementUser = {
-            uid: "requirement_mock",
-            skills: requiredSkills,
-            interests: [],
-        };
-
-        const recommendations = allUsers
-            .filter(u => u.uid !== currentUserAuth?.uid)
+        const matches = users
+            .filter(u => u.uid !== me.uid)
             .map(u => {
-                const score = calculateCompatibility(mockRequirementUser, u);
-                return { user: u, score };
-            })
-            .filter(m => m.score > 0)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3);
+                const hasNeededSkills = (u.skills || []).some(s => skills.some(req => req.toLowerCase() === s.toLowerCase()));
+                if (!hasNeededSkills) return null;
 
-        setRecommended(recommendations);
-        setSearching(false);
+                const { score, explanation } = calculateCompatibility(me, u);
+                return {
+                    user: u,
+                    score: score + 10,
+                    explanation: `Has requested skill. ${explanation}`
+                };
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.score - a.score);
+
+        setRecommended(matches);
+    };
+
+    const handleCreateRoom = async () => {
+        setCreating(true);
+        try {
+            const roomId = await createTeam(
+                "New Project Team",
+                "A clean slate to build something great.",
+                skillsNeeded
+            );
+            navigate(`/room/${roomId}`);
+        } catch (e) {
+            console.error(e);
+        }
+        setCreating(false);
     };
 
     return (
-        <div>
-            <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-neonBlue/20 rounded-xl">
-                    <FlaskConical className="text-neonBlue" size={32} />
-                </div>
-                <div>
-                    <h1 className="text-4xl font-bold"><span className="neon-text-blue">Team</span> Builder</h1>
-                    <p className="text-gray-400 mt-1">Input your project idea and required skills to find the perfect teammates.</p>
-                </div>
-            </div>
+        <div className="max-w-6xl mx-auto">
+            <h1 className="text-4xl font-display font-black text-slate-900 mb-8">Team <span className="text-blue-500">Builder</span></h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-1 glass-card p-6 h-fit">
-                    <h2 className="text-xl font-bold mb-4">Project Requirements</h2>
 
-                    <div className="mb-4">
-                        <label className="block text-sm text-gray-400 mb-2">Project Idea</label>
-                        <textarea
-                            value={idea} onChange={e => setIdea(e.target.value)}
-                            className="w-full glass-input h-24 resize-none"
-                            placeholder="Describe your hackathon or project idea..."
-                        />
-                    </div>
+                <div className="lg:col-span-1 space-y-6">
+                    <div className="doodle-card p-6 bg-[#ebf8ff]">
+                        <h2 className="text-xl font-display font-bold mb-4 flex items-center gap-2">
+                            <Users size={20} /> Who do you need?
+                        </h2>
 
-                    <div className="mb-6">
-                        <label className="block text-sm text-gray-400 mb-2">Required Skills (Tags)</label>
-                        <div className="flex gap-2 mb-3">
+                        <div className="flex gap-2 mb-4">
                             <input
-                                type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)}
+                                type="text"
+                                className="doodle-input flex-1 py-2 text-sm"
+                                placeholder="E.g. React, UX, Database"
+                                value={skillInput}
+                                onChange={e => setSkillInput(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleAddSkill()}
-                                className="flex-1 glass-input" placeholder="e.g. Node.js, UI/UX"
                             />
-                            <button
-                                onClick={handleAddSkill}
-                                className="p-2 bg-neonBlue/20 text-neonBlue rounded-xl hover:bg-neonBlue/40 transition font-bold"
-                            >
-                                +
+                            <button onClick={handleAddSkill} className="btn-doodle px-3 py-2">
+                                <Plus size={16} />
                             </button>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {requiredSkills.map(skill => (
-                                <span key={skill} className="px-3 py-1 bg-neonBlue/10 text-neonBlue text-sm rounded-full flex items-center gap-2 border border-neonBlue/30">
+
+                        <div className="flex flex-wrap gap-2 mb-6">
+                            {skillsNeeded.map(skill => (
+                                <span key={skill} className="text-xs font-bold bg-white text-slate-800 px-3 py-1.5 rounded-full border-2 border-slate-800 flex items-center gap-1 shadow-[2px_2px_0px_#1e293b]">
                                     {skill}
-                                    <button onClick={() => setRequiredSkills(requiredSkills.filter(s => s !== skill))} className="hover:text-white"><X size={14} /></button>
+                                    <button onClick={() => handleRemoveSkill(skill)} className="hover:text-red-500 ml-1">X</button>
                                 </span>
                             ))}
+                            {skillsNeeded.length === 0 && (
+                                <span className="text-sm italic text-slate-500">Add some skills to find teammates.</span>
+                            )}
                         </div>
-                    </div>
 
-                    <button
-                        onClick={handleFindTeam}
-                        disabled={searching || requiredSkills.length === 0}
-                        className="w-full btn-neon btn-neon-primary flex justify-center items-center gap-2"
-                    >
-                        {searching ? <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin glow"></div> : <><Search size={20} /> Find Teammates</>}
-                    </button>
+                        <button
+                            onClick={handleCreateRoom}
+                            disabled={creating}
+                            className="w-full btn-doodle btn-doodle-primary"
+                        >
+                            {creating ? "Creating..." : <><ArrowRight size={18} /> Create Project Room</>}
+                        </button>
+                    </div>
                 </div>
 
-                <div className="lg:col-span-2 space-y-6">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        Top Recommendations
-                        {recommended.length > 0 && <span className="text-sm bg-neonPink/20 text-neonPink px-3 py-1 rounded-full">{recommended.length} found</span>}
-                    </h2>
+                <div className="lg:col-span-2">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-display font-bold">Recommended Peers</h2>
+                        {recommended.length > 0 && <span className="text-sm bg-pink-200 border-2 border-slate-800 text-slate-900 px-3 py-1 rounded-full font-bold shadow-[2px_2px_0px_#1e293b]">{recommended.length} found</span>}
+                    </div>
 
-                    {recommended.length === 0 && !searching && (
-                        <div className="glass-card p-12 text-center text-gray-400 border border-dashed border-white/20">
-                            Enter required skills and click Find Teammates to see recommendations.
+                    {skillsNeeded.length === 0 ? (
+                        <div className="doodle-card p-12 text-center bg-white border-dashed">
+                            <p className="text-slate-500 font-bold mb-2">Search for skills to see recommendations.</p>
+                            <p className="text-sm text-slate-400">Add the tools and languages you need for your project.</p>
+                        </div>
+                    ) : recommended.length === 0 ? (
+                        <div className="doodle-card p-12 text-center bg-white border-dashed">
+                            <p className="text-slate-500 font-bold">No one perfectly matches those skills yet.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {recommended.map(match => (
+                                <MatchCard key={match.user.uid} match={match} />
+                            ))}
                         </div>
                     )}
-
-                    {!searching && recommended.map((match, idx) => (
-                        <MatchCard key={match.user.uid} match={match} rank={idx + 1} />
-                    ))}
                 </div>
             </div>
         </div>

@@ -1,52 +1,58 @@
-import { CheckCircle2, User as UserIcon } from "lucide-react";
+import { Star, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export default function MatchCard({ match, rank }) {
-    const { user, score } = match;
-
+export default function MatchCard({ match }) {
     return (
-        <div className="glass-card p-6 flex flex-col md:flex-row gap-6 items-center relative overflow-hidden group">
-            <div className="absolute top-0 right-0 bg-neonBlue/20 text-neonBlue px-4 py-1 rounded-bl-2xl font-black text-xl border-b border-l border-neonBlue/30">
-                #{rank}
+        <div className="doodle-card p-6 flex flex-col h-full bg-white relative overflow-hidden group">
+            {match.score > 80 && (
+                <div className="absolute top-0 right-0 bg-yellow-300 text-slate-900 text-xs font-bold px-3 py-1 rounded-bl-xl border-l-2 border-b-2 border-slate-800 shadow-[-2px_2px_0px_#1e293b] flex items-center gap-1 z-10">
+                    <Star size={12} className="fill-slate-900" /> Top Match
+                </div>
+            )}
+
+            <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-full bg-blue-100 border-2 border-slate-800 shadow-[4px_4px_0px_#1e293b] flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl font-black text-slate-800">{match.user.displayName?.charAt(0) || '?'}</span>
+                </div>
+                <div>
+                    <h3 className="text-xl font-display font-black text-slate-900">{match.user.displayName}</h3>
+                    <p className="text-sm font-bold text-slate-500">{match.user.department || "No Department"}</p>
+                </div>
             </div>
 
-            <div className="w-20 h-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 relative">
-                <UserIcon size={32} className="text-gray-400" />
-                {score > 80 && (
-                    <div className="absolute -bottom-2 -right-2 bg-neonPink text-white rounded-full p-1 shadow-[0_0_10px_#ff00aa]">
-                        <CheckCircle2 size={16} />
-                    </div>
-                )}
+            <div className="mb-4">
+                <p className="text-sm text-slate-600 line-clamp-2 italic">
+                    "{match.user.bio || "Hi, I'm new here!"}"
+                </p>
             </div>
 
-            <div className="flex-1 w-full text-center md:text-left">
-                <h3 className="text-2xl font-bold mb-1 group-hover:neon-text-blue transition-all">{user.name}</h3>
-                <p className="text-gray-400 mb-3">{user.department} {user.year ? `• Year ${user.year}` : ''}</p>
-
-                <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    {(user.skills || []).slice(0, 4).map(skill => (
-                        <span key={skill} className="px-3 py-1 bg-neonBlue/10 text-neonBlue text-sm rounded-full border border-neonBlue/30 shadow-sm">
+            <div className="mb-4 flex-1">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Top Skills</h4>
+                <div className="flex flex-wrap gap-1">
+                    {(match.user.skills || []).slice(0, 3).map((skill, i) => (
+                        <span key={i} className="text-xs font-bold bg-slate-100 text-slate-700 px-2 py-1 rounded-md border-2 border-slate-800">
                             {skill}
                         </span>
                     ))}
-                    {(user.skills || []).length > 4 && (
-                        <span className="px-3 py-1 bg-white/5 text-gray-400 text-sm rounded-full border border-white/10">
-                            +{(user.skills || []).length - 4} more
-                        </span>
-                    )}
                 </div>
             </div>
 
-            <div className="w-full md:w-48 flex flex-col items-center justify-center">
-                <div className="text-sm text-gray-400 mb-2">Compatibility</div>
-                <div className="text-4xl font-black neon-text-pink mb-3">{score}%</div>
-
-                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                        className="h-full bg-neonPink shadow-[0_0_10px_#ff00aa] rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${score}%` }}
-                    />
+            <div className="mt-4 pt-4 border-t-2 border-slate-100 flex items-center justify-between">
+                <div className="flex flex-col">
+                    <span className="text-2xl font-black text-pink-500">{match.score}%</span>
+                    <span className="text-xs font-bold text-slate-400">Match</span>
                 </div>
+
+                <Link to={`/room/new?partner=${match.user.uid}`} className="btn-doodle btn-doodle-primary py-2 px-4 text-sm">
+                    Connect <ArrowRight size={16} />
+                </Link>
             </div>
+
+            {match.explanation && (
+                <div className="mt-3 text-xs font-bold text-slate-500 bg-slate-50 p-2 rounded-lg border-2 border-dashed border-slate-300">
+                    💡 {match.explanation}
+                </div>
+            )}
         </div>
     );
 }

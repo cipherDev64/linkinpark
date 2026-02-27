@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,56 +6,56 @@
 
 @layer base {
   body {
-    @apply bg-darkBg text-gray-100 font-sans tracking-wide antialiased;
+    @apply bg-[#f7f7f7] text-slate-900 font-sans tracking-wide antialiased;
     margin: 0;
     min-height: 100vh;
     overflow-x: hidden;
+    background-image: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
   }
 }
 
 @layer utilities {
-  .glass-card {
-    @apply bg-glassBg backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl transition-all duration-300;
-  }
-  
-  .glass-card:hover {
-    @apply border-neonBlue/50 shadow-[0_0_15px_rgba(0,240,255,0.3)];
-  }
-  
-  .glass-input {
-    @apply bg-black/40 border border-white/20 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-neonBlue focus:ring-1 focus:ring-neonBlue transition-all;
+  .doodle-card {
+    @apply bg-white border-2 border-slate-800 rounded-3xl shadow-[4px_4px_0px_#1e293b] transition-all duration-300;
   }
 
-  .neon-text-blue {
-    text-shadow: 0 0 10px rgba(0,240,255,0.7), 0 0 20px rgba(0,240,255,0.5);
-    @apply text-neonBlue;
+  .doodle-card:hover {
+    @apply -translate-y-1 shadow-[6px_6px_0px_#1e293b];
   }
 
-  .neon-text-pink {
-    text-shadow: 0 0 10px rgba(255,0,170,0.7), 0 0 20px rgba(255,0,170,0.5);
-    @apply text-neonPink;
+  .doodle-input {
+    @apply bg-white border-2 border-slate-800 rounded-2xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-0 focus:shadow-[4px_4px_0px_#1e293b] hover:-translate-y-0.5 transition-all w-full;
   }
 
-  .btn-neon {
-    @apply relative px-6 py-3 font-semibold text-white rounded-xl overflow-hidden glass-card hover:bg-white/10 transition-all duration-300;
+  .btn-doodle {
+    @apply relative px-6 py-3 font-bold text-slate-800 rounded-2xl border-2 border-slate-800 bg-white shadow-[4px_4px_0px_#1e293b] hover:-translate-y-1 hover:shadow-[6px_6px_0px_#1e293b] active:translate-y-0 active:shadow-[0px_0px_0px_#1e293b] transition-all duration-200 inline-flex items-center justify-center gap-2;
   }
-  
-  .btn-neon-primary {
-    @apply bg-neonBlue/20 border-neonBlue/50 text-neonBlue hover:bg-neonBlue/30 hover:shadow-[0_0_15px_rgba(0,240,255,0.5)];
+
+  .btn-doodle-primary {
+    @apply bg-blue-300 text-slate-900 border-slate-900 shadow-[4px_4px_0px_#0f172a];
+  }
+
+  .btn-doodle-pink {
+    @apply bg-pink-300 text-slate-900 border-slate-900 shadow-[4px_4px_0px_#0f172a];
   }
 }
 
-/* Custom Scrollbar for dark theme */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 12px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #050505;
+  background: #f7f7f7;
+  border-left: 2px solid #1e293b;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 4px;
+  background: #cbd5e1;
+  border: 2px solid #1e293b;
+  border-radius: 12px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #00f0ff;
+  background: #94a3b8;
 }

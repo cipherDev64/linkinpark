@@ -1,105 +1,217 @@
-import { useEffect, useState, useRef } from "react";
-import ForceGraph2D from "react-force-graph-2d";
-import { getAllUsers } from "../services/userService";
-import { getCurrentUser } from "../services/authService";
-import { generateGraphData } from "../services/graphService";
-import { calculateCompatibility } from "../services/matchService";
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import ForceGraph2D from 'react-force-graph-2d';
+import { getAllUsers } from '../services/userService';
+import { calculateCompatibility } from '../services/matchService';
+import { getCurrentUser } from '../services/authService';
+import { X, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function GraphView() {
+    const graphRef = useRef();
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
-    const [currentUser, setCurrentUser] = useState(null);
     const [selectedNode, setSelectedNode] = useState(null);
-    const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-    const containerRef = useRef();
+    // Assuming 64rem (256px) sidebar, keeping it responsive
+    const [dimensions, setDimensions] = useState({ width: window.innerWidth - 256, height: window.innerHeight });
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchData = async () => {
-            const allUsers = await getAllUsers();
-            const currentAuth = getCurrentUser();
-            const current = allUsers.find(u => u.uid === currentAuth?.uid) || null;
-
-            setCurrentUser(current);
-            setGraphData(generateGraphData(allUsers, current));
-        };
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        if (containerRef.current) {
-            setDimensions({
-                width: containerRef.current.clientWidth,
-                height: containerRef.current.clientHeight
-            });
-        }
         const handleResize = () => {
-            if (containerRef.current) {
-                setDimensions({
-                    width: containerRef.current.clientWidth,
-                    height: containerRef.current.clientHeight
-                });
-            }
+            setDimensions({
+                width: window.innerWidth - (window.innerWidth < 768 ? 0 : 256), // Adjust for mobile if we had one
+                height: window.innerHeight
+            });
         };
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const handleNodeClick = (node) => {
-        if (node.isCurrentUser) return;
-        const score = currentUser ? calculateCompatibility(currentUser, node.user) : 0;
-        setSelectedNode({ user: node.user, score });
-    };
+    useEffect(() => {
+        const loadGraphData = async () => {
+            const users = await getAllUsers();
+
+            const nodes = users.map(user => ({
+                id: user.uid,
+                name: user.displayName,
+                group: user.department || 'Unknown',
+                val: 5,
+                ...user
+            }));
+
+            const links = [];
+            for (let i = 0; i < users.length; i++) {
+                for (let j = i + 1; j < users.length; j++) {
+                    const { score, explanation } = calculateCompatibility(users[i], users[j]);
+                    if (score >= 65) {
+                        links.push({
+                            source: users[i].uid,
+                            target: users[j].uid,
+                            value: score,
+                            explanation
+                        });
+                    }
+                }
+            }
+
+            setGraphData({ nodes, links });
+        };
+        loadGraphData();
+    }, []);
+
+    const handleNodeClick = useCallback((node) => {
+        // Find best match if clicking on someone else
+        const me = getCurrentUser();
+        let matchInfo = null;
+        if (me && node.uid !== me.uid) {
+            const myNode = graphData.nodes.find(n => n.uid === me.uid);
+            if (myNode) {
+                matchInfo = calculateCompatibility(myNode, node);
+            }
+        }
+
+        setSelectedNode({ ...node, matchInfo });
+
+        const distance = 40;
+        const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z);
+
+        graphRef.current?.centerAt(node.x, node.y, 1000);
+        graphRef.current?.zoom(4, 2000);
+    }, [graphData]);
+
+    const nodeColors = useMemo(() => {
+        const colors = ['#fca5a5', '#93c5fd', '#86efac', '#fde047', '#c4b5fd', '#fbcfe8'];
+        let mapping = {};
+        let idx = 0;
+        return (group) => {
+            if (!mapping[group]) {
+                mapping[group] = colors[idx % colors.length];
+                idx++;
+            }
+            return mapping[group];
+        }
+    }, []);
 
     return (
-        <div className="h-[calc(100vh-8rem)] flex flex-col">
-            <div className="mb-4">
-                <h1 className="text-3xl font-bold">Campus <span className="neon-text-blue">Graph</span></h1>
-                <p className="text-gray-400">Visualize skill connections across NHCE. Nodes are users, links are shared skills.</p>
+        <div className="relative w-full h-full bg-[#f7f7f7] overflow-hidden -m-8">
+            {/* Graph Legend Overlay */}
+            <div className="absolute top-4 left-4 doodle-card p-4 bg-white z-10 w-48 shadow-[2px_2px_0px_#1e293b]">
+                <h3 className="text-sm font-bold border-b-2 border-slate-800 pb-2 mb-2">Departments</h3>
+                <div className="flex flex-col gap-2">
+                    {Array.from(new Set(graphData.nodes.map(n => n.group))).map(dept => (
+                        <div key={dept} className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                            <div className="w-3 h-3 rounded-full border-2 border-slate-800" style={{ backgroundColor: nodeColors(dept) }}></div>
+                            <span className="truncate">{dept}</span>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            <div className="flex-1 relative glass-card overflow-hidden" ref={containerRef}>
-                {graphData.nodes.length > 0 && (
-                    <ForceGraph2D
-                        width={dimensions.width}
-                        height={dimensions.height}
-                        graphData={graphData}
-                        nodeLabel="label"
-                        nodeColor="color"
-                        nodeVal="val"
-                        linkColor={() => "rgba(255,255,255,0.1)"}
-                        linkWidth={link => link.sharedSkills > 2 ? 3 : 1}
-                        onNodeClick={handleNodeClick}
-                        backgroundColor="transparent"
-                        nodeRelSize={4}
-                        enableZoomPanInteraction={true}
-                    />
-                )}
+            <ForceGraph2D
+                ref={graphRef}
+                width={dimensions.width}
+                height={dimensions.height}
+                graphData={graphData}
+                nodeAutoColorBy="group"
+                onNodeClick={handleNodeClick}
+                nodeCanvasObject={(node, ctx, globalScale) => {
+                    const label = node.name;
+                    const fontSize = 12 / globalScale;
+                    ctx.font = `bold ${fontSize}px "Outfit", Sans-Serif`;
 
-                {selectedNode && (
-                    <div className="absolute top-4 right-4 w-80 glass-card p-6 border-neonBlue/50 shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all">
-                        <div className="flex justify-between items-start mb-4">
-                            <h3 className="text-xl font-bold text-white">{selectedNode.user.name}</h3>
+                    // Draw node
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, 4, 0, 2 * Math.PI, false);
+                    ctx.fillStyle = nodeColors(node.group);
+                    ctx.fill();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = '#1e293b'; // slate-800
+                    ctx.stroke();
+
+                    // Draw label text
+                    const textWidth = ctx.measureText(label).width;
+                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2 - 8, ...bckgDimensions);
+
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillText(label, node.x, node.y - 8);
+                }}
+                linkColor={() => 'rgba(148, 163, 184, 0.4)'} // slate-400 with opacity
+                linkWidth={link => link.value > 80 ? 2 : 1}
+                d3VelocityDecay={0.3}
+            />
+
+            {/* Node Info Overlay */}
+            {selectedNode && (
+                <div className="absolute top-4 right-4 w-80 doodle-card p-6 border-4 border-slate-800 bg-white z-20 shadow-[6px_6px_0px_#1e293b] animate-slide-in">
+                    <div className="flex justify-between items-start mb-4 border-b-2 border-slate-800 pb-4">
+                        <div className="flex-1 pr-4">
+                            <h2 className="text-2xl font-display font-black text-slate-900 leading-tight">{selectedNode.name}</h2>
+                            <p className="text-slate-500 font-bold">{selectedNode.department || 'No department'}</p>
+                            <p className="text-xs font-bold text-slate-400 mt-1">{selectedNode.rolePreference}</p>
+                        </div>
+                        <button
+                            onClick={() => setSelectedNode(null)}
+                            className="text-slate-400 hover:text-slate-900 transition-colors"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4">
+                        {selectedNode.bio && (
+                            <div>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Bio</h4>
+                                <p className="text-sm font-medium text-slate-700 italic">"{selectedNode.bio}"</p>
+                            </div>
+                        )}
+
+                        <div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Skills</h4>
+                            <div className="flex flex-wrap gap-1">
+                                {selectedNode.skills && selectedNode.skills.length > 0 ? (
+                                    selectedNode.skills.map((skill, i) => (
+                                        <span key={i} className="text-xs font-bold bg-slate-100 text-slate-700 px-2 py-1 rounded border-2 border-slate-800">{skill}</span>
+                                    ))
+                                ) : (
+                                    <span className="text-xs text-slate-500 italic">No skills listed</span>
+                                )}
+                            </div>
+                        </div>
+
+                        {(selectedNode.github || selectedNode.linkedin || selectedNode.portfolio) && (
+                            <div className="flex gap-2 pt-2 border-t-2 border-slate-100">
+                                {selectedNode.github && <a href={selectedNode.github} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-slate-900"><ExternalLink size={16} /></a>}
+                                {selectedNode.linkedin && <a href={selectedNode.linkedin} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-blue-600"><ExternalLink size={16} /></a>}
+                                {selectedNode.portfolio && <a href={selectedNode.portfolio} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-pink-500"><ExternalLink size={16} /></a>}
+                            </div>
+                        )}
+
+                        {selectedNode.matchInfo && selectedNode.matchInfo.score > 0 && (
+                            <div className="mt-4 pt-4 border-t-2 border-slate-800">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm font-bold text-slate-600">Compatibility</span>
+                                    <span className="text-xl font-black text-pink-500">{selectedNode.matchInfo.score}%</span>
+                                </div>
+                                <p className="text-xs font-bold text-slate-500 bg-[#fff0f6] p-2 rounded-lg border-2 border-slate-800">
+                                    💡 {selectedNode.matchInfo.explanation}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="pt-4 mt-4 border-t-2 border-slate-800 flex justify-end">
                             <button
-                                onClick={() => setSelectedNode(null)}
-                                className="text-gray-400 hover:text-white"
-                            >×</button>
-                        </div>
-                        <p className="text-sm text-gray-400 mb-4">{selectedNode.user.department}</p>
-
-                        <div className="mb-4">
-                            <div className="text-sm text-gray-500 mb-1">Compatibility</div>
-                            <div className="text-3xl font-black neon-text-pink">{selectedNode.score}%</div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                            {(selectedNode.user.skills || []).slice(0, 5).map(s => (
-                                <span key={s} className="text-xs px-2 py-1 bg-white/5 rounded-full border border-white/10 text-gray-300">
-                                    {s}
-                                </span>
-                            ))}
+                                onClick={() => navigate(`/room/new?partner=${selectedNode.uid}`)}
+                                className="btn-doodle w-full"
+                            >
+                                Start Collab
+                            </button>
                         </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1,20 +1,27 @@
 import { useEffect, useState } from "react";
 import { getUserById, updateUserProfile } from "../services/userService";
 import { getCurrentUser } from "../services/authService";
+import Toast from "../components/Toast";
 import { Save, X, Plus } from "lucide-react";
 
 export default function Profile() {
     const [profile, setProfile] = useState({
         department: "",
         year: "",
+        bio: "",
+        github: "",
+        linkedin: "",
+        portfolio: "",
+        rolePreference: "",
+        availability: "Available",
         skills: [],
         interests: [],
-        careerGoal: "",
-        projects: []
+        projects: [],
+        badges: []
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState("");
+    const [toast, setToast] = useState(null);
 
     const [skillInput, setSkillInput] = useState("");
     const [interestInput, setInterestInput] = useState("");
@@ -28,10 +35,16 @@ export default function Profile() {
                     setProfile({
                         department: data.department || "",
                         year: data.year || "",
+                        bio: data.bio || "",
+                        github: data.github || "",
+                        linkedin: data.linkedin || "",
+                        portfolio: data.portfolio || "",
+                        rolePreference: data.rolePreference || "",
+                        availability: data.availability || "Available",
                         skills: data.skills || [],
                         interests: data.interests || [],
-                        careerGoal: data.careerGoal || "",
-                        projects: data.projects || []
+                        projects: data.projects || [],
+                        badges: data.badges || []
                     });
                 }
             }
@@ -58,50 +71,51 @@ export default function Profile() {
 
     const handleSave = async () => {
         setSaving(true);
-        setMessage("");
+        setToast(null);
         try {
             const user = getCurrentUser();
             if (user) {
                 await updateUserProfile(user.uid, profile);
-                setMessage("Profile updated successfully!");
-                setTimeout(() => setMessage(""), 3000);
+                setToast({ message: "Profile updated successfully!", type: "success" });
             }
         } catch (error) {
             console.error(error);
-            setMessage("Failed to update profile.");
+            setToast({ message: "Failed to update profile.", type: "error" });
         }
         setSaving(false);
     };
 
     if (loading) {
-        return <div className="p-8 text-center text-gray-400">Loading profile...</div>;
+        return <div className="p-8 text-center text-slate-500 font-bold">Loading profile...</div>;
     }
 
     return (
-        <div className="max-w-4xl mx-auto pb-12">
-            <h1 className="text-4xl font-bold mb-8">Your <span className="neon-text-blue">Profile</span></h1>
+        <div className="max-w-4xl mx-auto pb-12 relative">
+            <h1 className="text-4xl font-display font-black mb-8 text-slate-900">Your <span className="text-blue-500">Profile</span></h1>
 
-            {message && (
-                <div className="mb-6 px-4 py-3 bg-green-500/20 border border-green-500/50 text-green-400 rounded-xl">
-                    {message}
-                </div>
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="glass-card p-8 space-y-6">
-                    <h2 className="text-xl font-bold border-b border-white/10 pb-4">Basic Information</h2>
+                <div className="doodle-card p-8 space-y-6 bg-[#f0f9ff]">
+                    <h2 className="text-2xl font-display font-bold border-b-2 border-slate-800 pb-4 flex items-center gap-2">Basic Information</h2>
 
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Department</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Department</label>
                         <input
                             type="text" name="department" value={profile.department} onChange={handleChange}
-                            className="w-full glass-input" placeholder="e.g. Computer Science"
+                            className="w-full doodle-input" placeholder="e.g. Computer Science"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Year of Study</label>
-                        <select name="year" value={profile.year} onChange={handleChange} className="w-full glass-input bg-darkBg text-white focus:bg-darkBg">
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Year of Study</label>
+                        <select name="year" value={profile.year} onChange={handleChange} className="w-full doodle-input bg-white appearance-none">
                             <option value="">Select Year</option>
                             <option value="1">1st Year</option>
                             <option value="2">2nd Year</option>
@@ -111,65 +125,119 @@ export default function Profile() {
                     </div>
 
                     <div>
-                        <label className="block text-sm text-gray-400 mb-2">Career Goal</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Role Preference (e.g. Frontend, Data Scientist)</label>
                         <input
-                            type="text" name="careerGoal" value={profile.careerGoal} onChange={handleChange}
-                            className="w-full glass-input" placeholder="e.g. Full Stack Developer"
+                            type="text" name="rolePreference" value={profile.rolePreference} onChange={handleChange}
+                            className="w-full doodle-input" placeholder="e.g. Frontend Developer"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Short Bio</label>
+                        <textarea
+                            name="bio" value={profile.bio} onChange={handleChange}
+                            className="w-full doodle-input h-24 resize-none text-sm" placeholder="Tell us about yourself..."
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Availability</label>
+                        <select name="availability" value={profile.availability} onChange={handleChange} className="w-full doodle-input bg-white appearance-none">
+                            <option value="Available">Available for Projects</option>
+                            <option value="Busy">Currently Busy</option>
+                            <option value="Looking For Team">Looking for a Team</option>
+                        </select>
+                    </div>
+
+                    <div className="pt-4 border-t-2 border-slate-200 space-y-4">
+                        <label className="block text-sm font-bold text-slate-700">External Links</label>
+                        <input
+                            type="text" name="github" value={profile.github} onChange={handleChange}
+                            className="w-full doodle-input py-2 text-sm" placeholder="GitHub URL"
+                        />
+                        <input
+                            type="text" name="linkedin" value={profile.linkedin} onChange={handleChange}
+                            className="w-full doodle-input py-2 text-sm" placeholder="LinkedIn URL"
+                        />
+                        <input
+                            type="text" name="portfolio" value={profile.portfolio} onChange={handleChange}
+                            className="w-full doodle-input py-2 text-sm" placeholder="Portfolio URL"
                         />
                     </div>
                 </div>
 
-                <div className="glass-card p-8 space-y-6">
-                    <h2 className="text-xl font-bold border-b border-white/10 pb-4">Attributes</h2>
+                <div className="space-y-8">
+                    <div className="doodle-card p-8 bg-[#fff0f6]">
+                        <h2 className="text-2xl font-display font-bold border-b-2 border-slate-800 pb-4 flex items-center gap-2">Attributes</h2>
 
-                    <div>
-                        <label className="block text-sm text-gray-400 mb-2">Skills</label>
-                        <div className="flex gap-2 mb-3">
-                            <input
-                                type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleAddTag('skills', skillInput, setSkillInput)}
-                                className="flex-1 glass-input" placeholder="e.g. React, Python"
-                            />
-                            <button
-                                onClick={() => handleAddTag('skills', skillInput, setSkillInput)}
-                                className="p-2 bg-neonBlue/20 text-neonBlue rounded-xl hover:bg-neonBlue/40 transition"
-                            >
-                                <Plus size={24} />
-                            </button>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Skills</label>
+                            <div className="flex gap-2 mb-3">
+                                <input
+                                    type="text" value={skillInput} onChange={e => setSkillInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleAddTag('skills', skillInput, setSkillInput)}
+                                    className="flex-1 doodle-input" placeholder="e.g. React, Python"
+                                />
+                                <button
+                                    onClick={() => handleAddTag('skills', skillInput, setSkillInput)}
+                                    className="btn-doodle px-4"
+                                >
+                                    <Plus size={24} />
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {profile.skills.map(skill => (
+                                    <span key={skill} className="px-3 py-1 font-bold bg-blue-100 text-slate-800 text-sm rounded-full flex items-center gap-2 border-2 border-slate-800">
+                                        {skill}
+                                        <button onClick={() => handleRemoveTag('skills', skill)} className="hover:text-red-500"><X size={14} /></button>
+                                    </span>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            {profile.skills.map(skill => (
-                                <span key={skill} className="px-3 py-1 bg-neonBlue/10 text-neonBlue text-sm rounded-full flex items-center gap-2 border border-neonBlue/30">
-                                    {skill}
-                                    <button onClick={() => handleRemoveTag('skills', skill)} className="hover:text-white"><X size={14} /></button>
-                                </span>
-                            ))}
+
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2 mt-6">Interests</label>
+                            <div className="flex gap-2 mb-3">
+                                <input
+                                    type="text" value={interestInput} onChange={e => setInterestInput(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleAddTag('interests', interestInput, setInterestInput)}
+                                    className="flex-1 doodle-input" placeholder="e.g. AI, Cybersec"
+                                />
+                                <button
+                                    onClick={() => handleAddTag('interests', interestInput, setInterestInput)}
+                                    className="btn-doodle px-4"
+                                >
+                                    <Plus size={24} />
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {profile.interests.map(interest => (
+                                    <span key={interest} className="px-3 py-1 font-bold bg-pink-100 text-slate-800 text-sm rounded-full flex items-center gap-2 border-2 border-slate-800">
+                                        {interest}
+                                        <button onClick={() => handleRemoveTag('interests', interest)} className="hover:text-red-500"><X size={14} /></button>
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm text-gray-400 mb-2 mt-6">Interests</label>
-                        <div className="flex gap-2 mb-3">
-                            <input
-                                type="text" value={interestInput} onChange={e => setInterestInput(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && handleAddTag('interests', interestInput, setInterestInput)}
-                                className="flex-1 glass-input" placeholder="e.g. AI, Cybersec"
-                            />
-                            <button
-                                onClick={() => handleAddTag('interests', interestInput, setInterestInput)}
-                                className="p-2 bg-neonPink/20 text-neonPink rounded-xl hover:bg-neonPink/40 transition"
-                            >
-                                <Plus size={24} />
-                            </button>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            {profile.interests.map(interest => (
-                                <span key={interest} className="px-3 py-1 bg-neonPink/10 text-neonPink text-sm rounded-full flex items-center gap-2 border border-neonPink/30">
-                                    {interest}
-                                    <button onClick={() => handleRemoveTag('interests', interest)} className="hover:text-white"><X size={14} /></button>
-                                </span>
-                            ))}
-                        </div>
+                    <div className="doodle-card p-8 bg-[#fffae6]">
+                        <h2 className="text-2xl font-display font-bold border-b-2 border-slate-800 pb-4 flex items-center gap-2 mb-6">Badges & Inventory</h2>
+
+                        {profile.badges && profile.badges.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                {profile.badges.map((badge, idx) => (
+                                    <div key={idx} className="flex flex-col items-center justify-center p-4 border-2 border-slate-800 bg-white rounded-2xl shadow-[2px_2px_0px_#1e293b]">
+                                        <div className="w-12 h-12 bg-yellow-200 border-2 border-slate-800 rounded-full flex items-center justify-center mb-2 text-2xl">
+                                            🏆
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-800 text-center">{badge}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm font-bold text-slate-400 text-center p-6 border-2 border-dashed border-slate-300 rounded-xl">No badges earned yet.</p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -178,9 +246,9 @@ export default function Profile() {
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="btn-neon btn-neon-primary flex items-center gap-2 px-8"
+                    className="btn-doodle btn-doodle-primary px-8"
                 >
-                    {saving ? "Saving..." : <><Save size={20} /> Save Profile</>}
+                    {saving ? <div className="w-6 h-6 border-4 border-slate-800 border-t-transparent rounded-full animate-spin"></div> : <><Save size={20} /> Save Profile</>}
                 </button>
             </div>
         </div>
